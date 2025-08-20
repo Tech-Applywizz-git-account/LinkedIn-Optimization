@@ -77,7 +77,7 @@ const DOMAIN_KEYWORDS = {
     "Lean Manufacturing",
     "Six Sigma",
   ],
-  "Cyber Security": [
+  CyberSecurity: [
     "Cybersecurity",
     "Information Security",
     "Network Security",
@@ -112,9 +112,9 @@ function extractExperience(resumeText: string): number {
 
   // Look for explicit experience statements
   const expPatterns = [
-    /(\d+)\+?\s*years?\s*(?:of\s*)?experience/g,
-    /(\d+)\+?\s*years?\s*in/g,
-    /experience:\s*(\d+)\+?\s*years?/g,
+    /(\d+)\+?\s years?\s (?:of\s )?experience/g,
+    /(\d+)\+?\s years?\s in/g,
+    /experience:\s (\d+)\+?\s years?/g,
   ]
 
   for (const pattern of expPatterns) {

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useMemo, useState } from "react";
+import Markdown from "@/components/ui/Markdown";
 
 type ExperienceInput = {
   id: string;
@@ -171,9 +172,12 @@ export default function StepwiseExperience({
             <div className="text-sm text-gray-600">Creating content…</div>
           )}
           {!!current.state?.output && (
-            <pre className="whitespace-pre-wrap text-sm leading-6">
+            // <pre className="whitespace-pre-wrap text-sm leading-6">
+            //   {current.state.output}
+            // </pre>
+            <Markdown className="text-sm leading-6">
               {current.state.output}
-            </pre>
+            </Markdown>
           )}
         </div>
       </div>
@@ -187,10 +191,10 @@ export default function StepwiseExperience({
               i === index
                 ? "bg-blue-500"
                 : s.status === "approved"
-                ? "bg-emerald-500"
-                : s.status === "generated"
-                ? "bg-gray-500"
-                : "bg-gray-300",
+                  ? "bg-emerald-500"
+                  : s.status === "generated"
+                    ? "bg-gray-500"
+                    : "bg-gray-300",
             ].join(" ")}
             title={`Item ${i + 1}: ${s.status}`}
           />

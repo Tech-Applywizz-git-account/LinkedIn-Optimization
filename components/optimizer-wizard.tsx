@@ -389,7 +389,7 @@ export default function OptimizerWizard({
                   <div key={i} className="mt-3">
                     <div className="text-xs font-semibold mb-1 text-gray-600">Experience {i + 1}</div>
                     <textarea
-                      value={val}
+                      value={val.replaceAll("*","")}
                       onChange={(e) => {
                         setExpParts((parts) => {
                           const copy = [...parts];
@@ -411,6 +411,7 @@ export default function OptimizerWizard({
           {step.key !== "experience" && outputs[step.key] && (
             <div className="mt-3">
               <textarea
+              
                 value={outputs[step.key]}
                 onChange={(e) => setOutputs((o) => ({ ...o, [step.key]: e.target.value }))}
                 className="w-full min-h-60 max-h-[60vh] h-72 resize-y border rounded p-3 text-sm"

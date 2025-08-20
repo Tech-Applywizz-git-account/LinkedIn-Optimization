@@ -52,7 +52,7 @@ export default function MinimalStepWrapper({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 text-sm">
+      {/* <div className="flex items-center gap-2 text-sm">
         <div className="font-medium">{current?.label || `Experience ${index + 1}`}</div>
 
         <div className="ml-auto flex items-center gap-2">
@@ -84,7 +84,7 @@ export default function MinimalStepWrapper({
             Step {index + 1} of {total}
           </span>
         </div>
-      </div>
+      </div> */}
 
       {/* Render your original OptimizerWizard unchanged */}
       <OptimizerWizard

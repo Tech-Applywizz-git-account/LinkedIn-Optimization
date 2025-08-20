@@ -2,20 +2,20 @@
 
 import { useState } from "react";
 import ResumeUpload from "@/components/resume-upload";
-import MinimalStepWrapper from "@/components/MinimalStepWrapper"; // ✅ default import
+import MinimalStepWrapper from "@/components/MinimalStepWrapper";
 import type { ParsedResume } from "@/lib/resumeParser";
+import { sanitizeLLMText } from "@/lib/sanitize";  // 👈 make sure this is imported
 
 export default function Page() {
   const [resumeText, setResumeText] = useState<string | null>(null);
   const [parsed, setParsed] = useState<ParsedResume | null>(null);
 
-  // 🚫 start empty so placeholders show
   const [targetRole, setTargetRole] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [industry, setIndustry] = useState("");
 
   function handleParsed(data: { text: string; parsed: ParsedResume }) {
-    setResumeText(data.text);
+    setResumeText(sanitizeLLMText(data.text));   // 👈 use it here
     setParsed(data.parsed || null);
   }
 
@@ -38,20 +38,16 @@ export default function Page() {
             <input
               className="mt-1 w-full border rounded p-2 placeholder-gray-400"
               value={targetRole}
-              onChange={(e) => setTargetRole(e.target.value)}
-              placeholder="e.g., Full Stack Developer, Data Analyst"
-              aria-label="Target Role"
+              onChange={(e) => setTargetRole(sanitizeLLMText(e.target.value))}  // 👈 use it here
             />
           </label>
 
-          <label className="text-sm">
-            Job Description (paste text)
+          {/* <label className="text-sm">
+            Job Description
             <textarea
               className="mt-1 w-full border rounded p-2 h-32 placeholder-gray-400"
               value={jobDescription}
-              onChange={(e) => setJobDescription(e.target.value)}
-              placeholder="Paste the job description here..."
-              aria-label="Job Description"
+              onChange={(e) => setJobDescription(sanitizeLLMText(e.target.value))} // 👈 use it here
             />
           </label>
 
@@ -60,26 +56,22 @@ export default function Page() {
             <input
               className="mt-1 w-full border rounded p-2 placeholder-gray-400"
               value={industry}
-              onChange={(e) => setIndustry(e.target.value)}
-              placeholder="e.g., Software, FinTech, Healthcare"
-              aria-label="Industry"
+              onChange={(e) => setIndustry(sanitizeLLMText(e.target.value))} // 👈 use it here
             />
-          </label>
+          </label> */}
         </div>
       </section>
 
-      {/* 3) Step-by-step wrapper around your existing wizard */}
+      {/* 3) Optimizer */}
       {resumeText ? (
         <section className="border rounded-xl p-4 bg-white">
           <h2 className="text-lg font-semibold mb-3">3) Generate Experience</h2>
-
           <MinimalStepWrapper
             resumeText={resumeText}
             parsed={parsed}
             targetRole={targetRole}
             jobDescription={jobDescription}
             industry={industry}
-            // genEndpoint="/api/generate-section" // uncomment only if your OptimizerWizard supports this prop
           />
         </section>
       ) : (
