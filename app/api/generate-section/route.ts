@@ -700,57 +700,106 @@ function sectionPrompt(section: string, _subIndex?: number, _hasRoleContext?: bo
   switch (section) {
     case "headline":
       return `Task:
-Create a LinkedIn HEADLINE using ONLY facts found in [Resume_Text].
-- Use the most recent role/title from the resume (no aspirational or target role).
-- ALWAYS include total years of experience if it is explicitly present in the resume (e.g., "4+ Years").
-- Include up to 3 skills explicitly listed in the resume (no extras, no keyword injection).
-- Format: Role/Title | [X]+ Years in [Skill1, Skill2, Skill3] | [Short phrase about core expertise from resume]
-- Keep under 220 characters. Title Case. Return ONLY the single headline line.
+ You are a LinkedIn optimization expert with 15+ years of experience in corporate career branding.
+You work for ApplyWizz, a company that optimizes LinkedIn profiles to rank in the top 1% of recruiter searches.
+
+Task:
+From the [Target_Role], [Resume_Text], and [Job_Description_Text], create a "HEADLINE" for a LinkedIn profile that:
+- Follows the formula: [Target Role / Aspiration] | [Years of Experience + Key Skills] | [Role Keywords from JD]
+- Includes 2–3 high-value keywords from the job description that recruiters would search for
+- Is corporate, professional, and impact-driven
+- Stays under 220 characters
+- Avoids buzzwords without substance (e.g., “hardworking,” “motivated”) and focuses on role-relevant terms
+- Uses title case for readability
+
+Logic:
+1. Identify the target role from [Target_Role].
+2. Extract years of experience and top skills from [Resume_Text].
+3. Extract the most important role keywords from [Job_Description_Text].
+4. Combine them in the format: [Target Role / Aspiration] | [YOE + Key Skills] | [Role Keywords from JD].
+5. Keep it concise, keyword-rich, and recruiter-friendly.
 
 Example Output:
+HEADLINE
 Full Stack Java Developer | 4+ Years in Spring Boot, React, AWS | Building Scalable Microservices & Cloud-Native Applications`;
 
     case "about":
       return `Task:
 
-Write a LinkedIn ABOUT summary using ONLY details from [Resume_Text].
-- The very first line MUST include: Most Recent Role/Title · [X]+ Years of Experience.
-- The value [X] must be copied EXACTLY as written in the resume. 
-- If the resume does not explicitly state years of experience, OMIT the years of experience completely (do NOT estimate or infer).
-- Summarize the scope of experience, domains, technologies/tools, and measurable outcomes strictly from the resume.
-- STRICT: Do not add external keywords, do not use the target role, do not use job descriptions, and do not invent or assume anything not in the resume.
-- 3–6 short paragraphs OR 6–10 concise bullets (choose one format).
-- Use exact values from the resume without modifying, rounding, or approximating them.
-- No invented claims; only include what is explicitly present in the resume.
-- Plain text only.`;
+You are a LinkedIn optimization expert with 15+ years of experience in corporate career branding.
+ You work for ApplyWizz, a company that optimizes LinkedIn profiles to rank in the top 1% of recruiter searches.
+ Task: From the [Target_Role], [Resume_Text], and [Job_Description_Text], create an "ABOUT" section for a LinkedIn profile that: - Is written in 3 short paragraphs: 1. Intro: Years of experience, specialization, and core value proposition. 2. Body: Role-relevant skills and measurable achievements (quantified results) from [Resume_Text] and [Job_Description_Text]. 3. Closing: Career vision, leadership/innovation focus, and role alignment. - Reads like a narrative, not a bullet list. - Is corporate, formal, keyword-rich, and recruiter-friendly. - Avoids casual phrases and personal anecdotes unrelated to the role. - Naturally integrates at least 6–8 high-value keywords from [Job_Description_Text] for LinkedIn search optimization
+. Logic:
+1. Identify total years of experience and areas of specialization from [Resume_Text]. 
+2. Extract most impactful achievements, tools, and technologies relevant to [Target_Role].
+3. Pull 6–8 high-value keywords from [Job_Description_Text] that recruiters are likely to search.
+4. Structure into 3 professional paragraphs with a clear narrative flow. 
+5. Ensure it is under 2,000 characters for LinkedIn's About section limit. 
+Example Output: 
+ABOUT
+With over 4 years of experience as a Full Stack Java Developer, I specialize in designing and delivering scalable, cloud‑native applications across the automotive and e‑commerce domains. My expertise spans backend development with Java, Spring Boot, Hibernate, and Microservices architecture, alongside building responsive, accessible UIs with React.js, HTML5, CSS3, Bootstrap, and JavaScript. I bring strong DevOps capabilities — AWS (EC2, Lambda, S3, RDS), Docker, Jenkins, GitHub Actions, Terraform, and CI/CD automation ensuring high‑availability systems that deploy faster and perform reliably.
+At General Motors, I engineered microservices that improved connected vehicle data processing by 45%, optimized infotainment UIs to boost user engagement by 28%, and automated build/release pipelines to reduce deployment lead time by 40%. At Augur Talent Care, I developed a modular e‑commerce backend achieving 99.9% uptime, implemented JWT‑based authentication blocking 500+ unauthorized access attempts, and integrated Stripe/PayPal gateways to drive a 23% increase in conversion rates. My work is backed by strong testing and security practices, including JUnit, Mockito, REST Assured, Selenium, Postman, and real‑time monitoring with ELK Stack and CloudWatch.
+Holding a Master’s in Information Technology from the University of Missouri–Kansas City and certifications in Java Fundamentals (Oracle) and Python (Cisco), I aim to progress into a Senior Full Stack Developer or Solutions Architect role. My goal is to architect high‑performance systems, mentor engineering teams, and drive innovation in cloud‑native application development, ensuring every solution I build is robust, scalable, and impactful.`;
 
     case "experience":
   return `Task:
-Write the ENTIRE LinkedIn EXPERIENCE section using ONLY [Resume_Text].
-Goal: produce a recruiter-friendly Experience section that covers ALL relevant employers and roles in reverse-chronological order.
+You are a LinkedIn optimization expert with 15+ years of experience in corporate career branding.
+You work for ApplyWizz, a company that optimizes LinkedIn profiles to rank in the top 1% of recruiter searches.
 
-Output rules (plain text only):
-- For EACH company (most recent first), output this EXACT structure, then leave ONE blank line before the next company:
+Task:
+From the [Target_Role], [Resume_Text], and [Job_Description_Text], create an "EXPERIENCE" section for a LinkedIn profile that:
 
-  Experience {N}
+### Role Formatting
+- Each role should begin with:
+  1. Job Title
+  2. Company Name | Location | Dates
+  3. A 1–2 sentence introduction summarizing role scope, domain, and overall business impact.
 
-  Title | Company | Location | Dates
-  - 4–7 bullets for that company/role group.
-  key achievements:
+### Bullets
+- Include 4–6 strong achievement bullets per role.
+- Each bullet MUST:
+  - Start with a powerful action verb (e.g., Engineered, Optimized, Spearheaded).
+  - Quantify results wherever possible (% improvements, $ savings, time reductions, volume increases).
+  - Bold key   tools, frameworks, and technologies   inline for LinkedIn SEO.
+  - Focus on measurable business outcomes, not generic responsibilities.
 
-  • 1–3 bullet points with metrics or quantifiable outcomes for THIS company only.
+### Key Achievements
+- Add a   Key Achievements   subsection if the role includes 2–3 standout wins.
+- Format separately from the main bullets (like in a corporate resume).
+- Use measurable results and impact-driven language.
 
-Numbering & order:
-- Number the company blocks as "Experience 1", "Experience 2", "Experience 3", ... where 1 is the MOST recent company.
-- Insert EXACTLY ONE blank line after the "Experience {N}" heading before the "Title | Company | Location | Dates" line.
-- Insert EXACTLY ONE blank line between each company block.
+### Style
+- Keep it corporate, concise, professional, and keyword-rich.
+- Integrate high-value keywords from [Job_Description_Text] for LinkedIn search ranking.
+- Avoid filler words like “responsible for” or “involved in.”
 
-STRICT per-company rules for "key achievements:":
-- If the resume contains measurable outcomes/metrics/results for that same company, include the "key achievements:" sub-block and insert EXACTLY ONE blank line after the "key achievements:" line before its bullets.
-- If the resume has NO measurable outcomes for that particular company, OMIT the "key achievements:" sub-block ONLY for that company (do not invent metrics, and do not add extra spacing).
-- Use ONLY facts from the resume; omit missing fields instead of guessing.
-- Strong verb bullets; outcomes first if metrics exist.
-- Return only the Experience content as plain text, with a SINGLE blank line separating each company block.`;
+Output Format:
+
+
+
+Logic:
+1. Identify the client’s job titles, companies, locations, and employment dates from [Resume_Text].
+2. Extract measurable achievements, tools, and technologies from each role.
+3. Integrate relevant high-value keywords from [Job_Description_Text] for LinkedIn search optimization.
+4. Convert tasks into quantified achievements.
+5. Keep each role concise yet impactful.
+
+EXPERIENCE
+Compliance Risk Analyst
+Accenture | Hyderabad, India | Feb 2020 – Dec 2021
+
+Led data-driven compliance transformation for global financial institutions, specializing in AML transaction monitoring, KYC/CDD optimization, and sanctions screening to strengthen regulatory adherence and reduce operational risk across anti-financial crime frameworks.
+
+• Accelerated PostgreSQL database performance by 45% through advanced query tuning and indexing, enabling faster access to KYC/CDD data for critical AML reviews.
+• Reduced false positives by 18% in Transaction Monitoring workflows by consolidating data from 50+ sources using Python and SQL, enhancing alert accuracy.
+• Automated sanctions screening processes with SSIS, cutting manual workload by 30% and ensuring OFAC compliance while accelerating case resolution.
+• Engineered hybrid data warehouse architecture (relational + NoSQL) that improved KYC data processing speed by 35%, enabling faster client onboarding.
+• Developed interactive Tableau dashboards to visualize suspicious activity reports and sanction lists, providing real-time Risk Assessment insights to compliance teams.
+• Enhanced data integrity by 25% through rigorous ETL validation protocols, minimizing errors in onboarding/transaction data for BSA/AML reporting.
+
+Key Achievements
+• Delivered 100% audit-ready data packages for BSA/AML regulatory submissions, reducing audit response time by 40%.
+• Reduced compliance operational costs by $150K/year through SSIS automation and ETL optimization.`;
 
     case "internship":
       return `Task:
@@ -815,50 +864,128 @@ Rules:
 
     case "projects":
   return `Task:
-Write the PROJECTS section using ONLY projects listed in [Resume_Text].
+You are a LinkedIn optimization expert with 15+ years of experience in corporate career branding.
+You work for ApplyWizz, a company that optimizes LinkedIn profiles to rank in the top 1% of recruiter searches.
 
-STRICT rules:
-- Do NOT mention the candidate's years of experience anywhere in this section.
-- The parentheses after each project name must contain ONLY technologies/tools (e.g., "React, Node.js, PostgreSQL"). Never put years, dates, durations, or phrases like "X years".
-- Use facts EXACTLY as stated in the resume. Do not invent tools, metrics, or timelines.
+Task:
+From the [Target_Role], [Resume_Text], and [Job_Description_Text], create a "PROJECTS" section for a LinkedIn profile that:
+- Lists only role-relevant academic, freelance, or personal projects that demonstrate skills for the target role.
+- Uses the format: Project Title – (Tools & Tech Used)
+- Each project should have 2–3 bullet points starting with action verbs.
+- Each bullet must highlight measurable results, real-world impact, or performance improvements.
+- Bold key tools & technologies inline for LinkedIn SEO (e.g.,   Spring Boot  ,   AWS EC2  ,   React.js  ).
+- Avoid “student project” language; make it outcome-driven and professional.
+- Keep it concise, corporate, and recruiter-friendly.
 
-Output:
-- Include exactly as many distinct projects as exist in the resume.
-- For each project: Name – (technologies used) – followed by 2–4 bullets with stack, responsibilities, and outcomes explicitly present in the resume.
-- Plain text only.
+Logic:
+1. From [Resume_Text], identify projects that use tools, technologies, or skills from [Job_Description_Text].
+2. Reframe each project as a professional achievement with tangible results.
+3. Highlight relevant keywords for LinkedIn search optimization.
+4. Remove filler words; focus on impact and skills.
 
 Example Output:
 PROJECTS
 
-Placement Management Portal – (Flask, MySQL, AWS EC2)
-• Developed Flask-based APIs with a MySQL backend to manage student data and recruiter access, ensuring secure role-based authentication.
-• Achieved 99.9% uptime post-deployment on AWS EC2, improving recruiter-student coordination efficiency by 35%.`;
+Placement Management Portal – (  Flask  ,   MySQL  ,   AWS EC2  )
+• Developed Flask-based APIs with a   MySQL   backend to manage student data and recruiter access, ensuring secure role-based authentication.
+• Achieved 99.9% uptime post-deployment on   AWS EC2  , improving recruiter-student coordination efficiency by 35%.
+
+IoT Device Monitoring Dashboard – (  Spring Boot  ,   WebSockets  ,   MQTT  ,   MySQL  )
+• Built a real-time monitoring dashboard for 50+ IoT devices, reducing fault detection times by 40%.
+• Integrated   MQTT   broker with   Spring Boot   microservices and   MySQL   backend for millisecond-level data processing.
+
+Sentiment Analysis of Product Reviews – (  Python  ,   NLTK  ,   Scikit-learn  ,   Pandas  )
+• Designed a text classification pipeline achieving 87% precision in sentiment detection for over 5,000 product reviews.
+• Applied   TF-IDF   vectorization and automated preprocessing using   Pandas   and   NumPy  , improving model accuracy.
+
+Student Attendance System – (  OpenCV  ,   Python Flask  ,   MySQL  ,   Heroku  )
+• Developed a facial recognition attendance system with 95% recognition accuracy for 200+ students.
+• Integrated real-time analytics dashboards using   Chart.js   and deployed securely on   Heroku.`;
     case "education":
       return `Task:
-Write the EDUCATION section using ONLY degrees listed in [Resume_Text].
-- Include exactly as many entries as the resume has (no extra, no missing).
-- For each entry: Degree – School (Year if present).
-- If present, add 1–2 bullets for relevant coursework or key academic projects (resume facts only). Plain text only.`;
+You are a LinkedIn optimization expert with 15+ years of experience in corporate career branding.
+You work for ApplyWizz, a company that optimizes LinkedIn profiles to rank in the top 1% of recruiter searches.
 
-    case "education_item":
-      return `Task:
-Write a SINGLE education entry using ONLY [ROLE CONTEXT] (if provided) OR otherwise ONLY [Resume_Text].
-- Format: Degree – School (Year if present).
-- Add 1–2 bullets ONLY if they are present in the resume for this entry.
-- Plain text only.`;
+Task:
+From the [Target_Role], [Resume_Text], and [Job_Description_Text], create an "EDUCATION" section for a LinkedIn profile that:
+- Lists degrees in reverse chronological order (most recent first).
+- Includes: Degree Name, University Name, Graduation Year (if available).
+- Adds 1–2 lines of relevant coursework, academic projects, or specializations aligned to the target role.
+- Avoids irrelevant subjects or overly generic phrases like “completed coursework in…”.
+- Presents academic projects as outcome-driven achievements rather than student work.
+- Uses corporate, recruiter-friendly formatting without abbreviations unless standard (e.g., B.Tech).
+
+Logic:
+1. Extract degree details from [Resume_Text].
+2. Match relevant courses/projects to skills in [Job_Description_Text].
+3. Reframe academic projects in impact + tools + results format if worth including.
+4. Keep the section clean and easy to scan for recruiters.
+
+Example Output:
+EDUCATION
+
+Master of Science in Information Technology – University of Missouri–Kansas City (2023)
+Relevant Coursework: Cloud Computing, Advanced Software Engineering, Data Visualization  
+Key Academic Project: Developed a   Flask   +   MySQL   placement portal deployed on   AWS EC2  , achieving 99.9% uptime and streamlining recruiter-student interactions.
+
+Bachelor of Technology in Information Technology – Anurag Group of Institutions (2022)
+Relevant Coursework: Data Structures & Algorithms, Database Management Systems, Web Development  
+Key Academic Project: Built a real-time   Spring Boot   +   MQTT   IoT monitoring dashboard for 50+ devices, reducing fault detection times by 40%.`;
 
     case "skills":
       return `Task:
-Write the SKILLS section using ONLY skills present in [Resume_Text].
-- Output as a comma-separated list (plain text).
-- Include a line "Endorsement Priority: ..." listing the most critical skills from the resume (no external additions).`;
+You are a LinkedIn optimization expert with 15+ years of experience in corporate career branding.
+You work for ApplyWizz, a company that optimizes LinkedIn profiles to rank in the top 1% of recruiter searches.
+
+Task:
+From the [Target_Role], [Resume_Text], and [Job_Description_Text], create a "SKILLS" section for a LinkedIn profile that:
+- Lists a minimum of 30 role-relevant skills based on the client’s resume and the job description.
+- Prioritizes high-value keywords recruiters search for in the target role.
+- Groups skills into logical categories: Backend Development, Frontend Development, Cloud & DevOps, Databases, Testing & QA, Monitoring & Logging.
+- Bold the top 10 skills that should be prioritized for LinkedIn endorsements.
+- Avoids soft skills (e.g., teamwork, communication) unless explicitly requested.
+- Formats the output as a clean, comma-separated list for direct LinkedIn input, followed by an endorsement priority note.
+
+Logic:
+1. Extract technical skills and tools from [Resume_Text].
+2. Compare with [Job_Description_Text] to identify missing but relevant skills.
+3. Select the most important 30–35 for LinkedIn SEO.
+4. Bold the top 10 most in-demand and role-defining skills for endorsement focus.
+
+Example Output:
+SKILLS
+  Java 17  ,   Spring Boot  ,   Microservices Architecture  ,   RESTful APIs  ,   React.js  ,   Amazon Web Services (AWS EC2, S3, Lambda, RDS)  ,   Docker  ,   Jenkins  ,   CI/CD Pipelines  ,   MySQL  , Spring MVC, Hibernate, J2EE, Maven, Gradle, JavaScript, HTML5, CSS3, Bootstrap, jQuery, Oracle Database, MongoDB, JUnit 5, Mockito, REST Assured, Selenium, Postman, JMeter, ELK Stack (Elasticsearch, Logstash, Kibana), AWS CloudWatch, Log4j, Terraform, GitHub Actions, SQL Server, GitLab, Bitbucket.
+
+Endorsement Priority: Java 17, Spring Boot, Microservices Architecture, RESTful APIs, React.js, AWS, Docker, Jenkins, CI/CD Pipelines, MySQL.`;
 
     case "certifications":
       return `Task:
-Write the CERTIFICATIONS section using ONLY items present in [Resume_Text].
-- Do NOT add new certifications.
-- Only include years/issuers if they are present in the resume (format: Name – Issuer (Year) if both exist).
-- Plain text only.`;
+You are a LinkedIn optimization expert with 15+ years of experience in corporate career branding.
+You work for ApplyWizz, a company that optimizes LinkedIn profiles to rank in the top 1% of recruiter searches.
+
+Task:
+From the [Target_Role] and [Resume_Text], create a "CERTIFICATIONS" section that:
+- Contains a maximum of 6 certifications
+- Only includes certifications relevant to the target role
+- Selects from trusted providers such as LinkedIn Learning, Coursera, DataCamp, AWS, IBM, Google, Microsoft, etc.
+- Prioritizes certifications covering missing or in-demand skills from the target role’s job description
+- Avoids any "(Free Audit Available)" or cost-related mentions
+- Uses clean recruiter-friendly formatting: [Certification Name] – [Issuing Organization] (Year if available)
+
+Logic:
+1. Extract technical skills & tools from [Target_Role] + [Job_Description_Text].
+2. Compare with skills in [Resume_Text].
+3. If a skill is missing, recommend a certification that covers it from a trusted provider.
+4. List certifications that enhance credibility for the role.
+
+Example Output:
+CERTIFICATIONS
+AWS Certified Developer – Associate – Amazon Web Services (2024)
+Spring Boot and Spring Cloud Fundamentals – LinkedIn Learning (2024)
+Java Programming Masterclass – Udemy (2023)
+React.js Essential Training – LinkedIn Learning (2023)
+DevOps Foundations – Coursera (2023)
+SQL for Data Analysis – DataCamp (2023)`;
 
     case "banner":
       return `Task:
