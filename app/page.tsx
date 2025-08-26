@@ -5,6 +5,8 @@ import ResumeUpload from "@/components/resume-upload";
 import MinimalStepWrapper from "@/components/MinimalStepWrapper";
 import type { ParsedResume } from "@/lib/resumeParser";
 import { sanitizeLLMText } from "@/lib/sanitize";  // 👈 make sure this is imported
+import ResumeProcessor from "@/components/ResumeProcessor"; 
+
 
 export default function Page() {
   const [resumeText, setResumeText] = useState<string | null>(null);
@@ -61,6 +63,7 @@ export default function Page() {
           </label> */}
         </div>
       </section>
+      
 
       {/* 3) Optimizer */}
       {resumeText ? (

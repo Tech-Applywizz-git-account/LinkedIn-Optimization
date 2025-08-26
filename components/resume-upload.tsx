@@ -153,12 +153,13 @@ function ResumeUpload({ onParsed }: ResumeUploadProps) {
     accept: {
       "application/pdf": [".pdf"],
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
-      "application/msword": [".doc"], // server replies with friendly message for legacy .doc
+      "application/msword": [".doc"],
       "text/plain": [".txt", ".md", ".markdown", ".json"],
       "text/rtf": [".rtf"],
       "text/html": [".html", ".htm"],
     },
   });
+  
 
   return (
     <div className="p-6 border rounded-xl shadow bg-white">
