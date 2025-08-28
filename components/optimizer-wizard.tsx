@@ -340,10 +340,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ParsedResume } from "@/lib/resumeParser";
 import { generateWithVariation } from "@/lib/generateSection";
+import ApplyWizzLoader from "@/components/ApplyWizzLoader";
+
 
 type SectionKey =
   | "headline" | "about" | "experience" | "projects"
-  | "education" | "skills" | "certifications" | "banner";
+  | "education" | "skills" | "certifications" ;
 
 const STEPS: { key: SectionKey; title: string; helper: string }[] = [
   { key: "headline",       title: "1) Headline",        helper: "Concise, keyword-rich headline under 220 chars." },
@@ -353,7 +355,7 @@ const STEPS: { key: SectionKey; title: string; helper: string }[] = [
   { key: "education",      title: "5) Education",       helper: "Reverse-chronological; relevant coursework." },
   { key: "skills",         title: "6) Skills",          helper: "30–35 skills, grouped, top 10 bolded." },
   { key: "certifications", title: "7) Certifications",  helper: "Max 6; from resume only." },
-  { key: "banner",         title: "8) Banner Concepts", helper: "2–3 concepts + one AI image prompt." },
+  
 ];
 
 interface WizardProps {
@@ -385,22 +387,22 @@ export default function OptimizerWizard({
   // NEW: per-section generating state (fixes "setGenerating" error and replaces `busy`)
   const [generating, setGenerating] = useState<Record<SectionKey, boolean>>({
     headline: false, about: false, experience: false, projects: false,
-    education: false, skills: false, certifications: false, banner: false,
+    education: false, skills: false, certifications: false, 
   });
 
   const [outputs, setOutputs] = useState<Record<SectionKey, string>>({
     headline: "", about: "", experience: "", projects: "",
-    education: "", skills: "", certifications: "", banner: "",
+    education: "", skills: "", certifications: "", 
   });
 
   const [approved, setApproved] = useState<Record<SectionKey, boolean>>({
     headline: false, about: false, experience: false, projects: false,
-    education: false, skills: false, certifications: false, banner: false,
+    education: false, skills: false, certifications: false, 
   });
 
   const [regenCount, setRegenCount] = useState<Record<SectionKey, number>>({
     headline: 0, about: 0, experience: 0, projects: 0,
-    education: 0, skills: 0, certifications: 0, banner: 0,
+    education: 0, skills: 0, certifications: 0, 
   });
 
   // Viewer modal
@@ -553,7 +555,12 @@ export default function OptimizerWizard({
             </div>
           </div>
 
-          {isGenerating && <p className="text-blue-600">Generating…</p>}
+          {isGenerating && (
+  <div className="my-5 flex items-center gap-3">
+    <ApplyWizzLoader size={72} />
+    <span className="text-sm text-slate-600">Optimising your {titleForStep(step.key).toLowerCase()}</span>
+  </div>
+)}
           {error && (
             <pre className="mt-3 whitespace-pre-wrap text-red-700 bg-red-50 border border-red-200 p-3 rounded">{error}</pre>
           )}

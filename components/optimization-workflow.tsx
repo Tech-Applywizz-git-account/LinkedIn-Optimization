@@ -69,7 +69,7 @@ export default function OptimizationWorkflow({ resume }: Props) {
           <CardBlock title="SKILLS" body={out.skills} />
           <CardBlock title="EDUCATION" body={out.education} />
           <CardBlock title="CERTIFICATIONS" body={out.certifications} />
-          <CardBlock
+          {/* <CardBlock
             title="BANNER"
             body={[
               "Concepts:",
@@ -78,7 +78,7 @@ export default function OptimizationWorkflow({ resume }: Props) {
               "AI Prompts:",
               ...out.banner.aiPrompts.map((p, i) => `${i + 1}. ${p}`)
             ].join("\n")}
-          />
+          /> */}
         </div>
       )}
     </div>
