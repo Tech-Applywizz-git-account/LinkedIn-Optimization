@@ -334,6 +334,8 @@
 //     </>
 //   );
 // }
+// components/optimizer-wizard.tsx
+// components/optimizer-wizard.tsx
 "use client";
 
 import { useState } from "react";
@@ -342,10 +344,14 @@ import type { ParsedResume } from "@/lib/resumeParser";
 import { generateWithVariation } from "@/lib/generateSection";
 import ApplyWizzLoader from "@/components/ApplyWizzLoader";
 
-
 type SectionKey =
-  | "headline" | "about" | "experience" | "projects"
-  | "education" | "skills" | "certifications" ;
+  | "headline"
+  | "about"
+  | "experience"
+  | "projects"
+  | "education"
+  | "skills"
+  | "certifications";
 
 const STEPS: { key: SectionKey; title: string; helper: string }[] = [
   { key: "headline",       title: "1) Headline",        helper: "Concise, keyword-rich headline under 220 chars." },
@@ -355,12 +361,11 @@ const STEPS: { key: SectionKey; title: string; helper: string }[] = [
   { key: "education",      title: "5) Education",       helper: "Reverse-chronological; relevant coursework." },
   { key: "skills",         title: "6) Skills",          helper: "30–35 skills, grouped, top 10 bolded." },
   { key: "certifications", title: "7) Certifications",  helper: "Max 6; from resume only." },
-  
 ];
 
 interface WizardProps {
   resumeText: string;
-  parsed: ParsedResume | null;   // kept for compatibility
+  parsed: ParsedResume | null;
   targetRole: string;
   jobDescription: string;
   industry?: string;
@@ -368,12 +373,12 @@ interface WizardProps {
 }
 
 function titleForStep(key: SectionKey) {
-  return STEPS.find(s => s.key === key)?.title.replace(/^\d+\)\s*/, "") || key;
+  return STEPS.find((s) => s.key === key)?.title.replace(/^\d+\)\s*/, "") || key;
 }
 
 export default function OptimizerWizard({
   resumeText,
-  parsed,                // eslint-disable-line @typescript-eslint/no-unused-vars
+  parsed, // eslint-disable-line @typescript-eslint/no-unused-vars
   targetRole,
   jobDescription,
   industry,
@@ -384,28 +389,26 @@ export default function OptimizerWizard({
   const [stepIndex, setStepIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  // NEW: per-section generating state (fixes "setGenerating" error and replaces `busy`)
   const [generating, setGenerating] = useState<Record<SectionKey, boolean>>({
     headline: false, about: false, experience: false, projects: false,
-    education: false, skills: false, certifications: false, 
+    education: false, skills: false, certifications: false,
   });
 
   const [outputs, setOutputs] = useState<Record<SectionKey, string>>({
     headline: "", about: "", experience: "", projects: "",
-    education: "", skills: "", certifications: "", 
+    education: "", skills: "", certifications: "",
   });
 
   const [approved, setApproved] = useState<Record<SectionKey, boolean>>({
     headline: false, about: false, experience: false, projects: false,
-    education: false, skills: false, certifications: false, 
+    education: false, skills: false, certifications: false,
   });
 
   const [regenCount, setRegenCount] = useState<Record<SectionKey, number>>({
     headline: 0, about: 0, experience: 0, projects: 0,
-    education: 0, skills: 0, certifications: 0, 
+    education: 0, skills: 0, certifications: 0,
   });
 
-  // Viewer modal
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerSection, setViewerSection] = useState<SectionKey | null>(null);
   const step = STEPS[stepIndex];
@@ -419,49 +422,41 @@ export default function OptimizerWizard({
     setViewerSection(null);
   }
 
-  /* ====================== GENERATION CORE ====================== */
-  // NOTE: Removed the old callGenerator() entirely (it’s redundant now).
-
-  // All sections (including experience) now follow the same flow
   async function generate(section: SectionKey) {
-  setGenerating((g) => ({ ...g, [section]: true }));
-  setError(null);
+    setGenerating((g) => ({ ...g, [section]: true }));
+    setError(null);
 
-  try {
-    const prev = outputs?.[section] ?? "";
-    const nextVariation = (regenCount?.[section] ?? 0) + 1;
+    try {
+      const prev = outputs?.[section] ?? "";
+      const nextVariation = (regenCount?.[section] ?? 0) + 1;
 
-    const payload = {
-      section,
-      targetRole,
-      resumeText,
-      jobDescription,
-      industry,
-      keywords,
-      variation: nextVariation,
-    };
+      const payload = {
+        section,
+        targetRole,
+        resumeText,
+        jobDescription,
+        industry,
+        keywords,
+        variation: nextVariation,
+      };
 
-    const { content } = await generateWithVariation(payload, prev ? [prev] : []);
+      const { content } = await generateWithVariation(payload, prev ? [prev] : []);
+      if (!content?.trim()) throw new Error("No content returned for this section.");
 
-    if (!content?.trim()) {
-      throw new Error("No content returned for this section.");
+      setOutputs((o) => ({ ...o, [section]: content }));
+      setRegenCount((c) => ({ ...c, [section]: nextVariation }));
+    } catch (err: any) {
+      setError(err?.message || "Generation failed");
+      console.error(err);
+    } finally {
+      setGenerating((g) => ({ ...g, [section]: false }));
     }
-
-    setOutputs((o) => ({ ...o, [section]: content }));
-    setRegenCount((c) => ({ ...c, [section]: nextVariation }));
-  } catch (err: any) {
-    setError(err?.message || "Generation failed");
-    console.error(err);
-  } finally {
-    setGenerating((g) => ({ ...g, [section]: false }));
   }
-}
 
   function approveAndNext() {
     const k = step.key;
     if (!outputs[k]?.trim()) return;
 
-    // No special combine logic for experience anymore
     setApproved((a) => ({ ...a, [k]: true }));
 
     if (stepIndex >= STEPS.length - 1) {
@@ -496,46 +491,63 @@ export default function OptimizerWizard({
         {/* Sidebar */}
         <aside className="lg:col-span-1 border rounded-xl p-4 bg-white">
           <h3 className="font-bold mb-3">LinkedIn Optimizer</h3>
-          <ol className="space-y-2 text-sm">
-            {STEPS.map((s, i) => {
-              const isCurrent = i === stepIndex;
-              const isApproved = approved[s.key];
-              const canView = isApproved && (outputs[s.key]?.trim()?.length ?? 0) > 0;
 
-              return (
-                <li key={s.key} className={`flex items-center justify-between gap-2 ${isCurrent ? "font-semibold" : ""}`}>
-                  <div className="flex items-center gap-2">
-                    <span className={`inline-block w-5 h-5 rounded-full text-center text-xs ${
-                      isApproved ? "bg-green-600 text-white" : isCurrent ? "bg-blue-600 text-white" : "bg-gray-200"
-                    }`}>
-                      {isApproved ? "✓" : i + 1}
-                    </span>
-                    <span>{s.title}</span>
-                  </div>
+          {/* --- compact, tidy list --- */}
+          <ol className="space-y-1 text-sm">
+  {STEPS.map((s, i) => {
+    const isCurrent  = i === stepIndex;
+    const isApproved = approved[s.key];
+    const canView    = isApproved && (outputs[s.key]?.trim()?.length ?? 0) > 0;
 
-                  {canView && (
-                    <button
-                      onClick={() => { openViewer(s.key); }}
-                      className="px-2 py-1 text-xs rounded border hover:bg-gray-50"
-                      title="View approved content"
-                    >
-                      View
-                    </button>
-                  )}
-                </li>
-              );
-            })}
-          </ol>
+    return (
+      <li
+        key={s.key}
+        className={`grid grid-cols-[1fr,auto] items-center gap-2 rounded-md px-1 py-1.5 ${
+          isCurrent ? "bg-slate-50 font-semibold" : ""
+        }`}
+      >
+        {/* LEFT: badge + title on ONE line, never break between them */}
+        <div className="inline-flex items-center gap-2 min-w-0">
+          <span
+            className={`shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full text-[11px] ${
+              isApproved
+                ? "bg-green-600 text-white"
+                : isCurrent
+                ? "bg-blue-600 text-white"
+                : "bg-gray-300 text-gray-800"
+            }`}
+          >
+            {isApproved ? "✓" : i + 1}
+          </span>
+          {/* keep the title on the same line; ellipsis if too long */}
+          <span className="truncate whitespace-nowrap">
+            {titleForStep(s.key)}
+          </span>
+        </div>
 
-          <div className="mt-4 text-xs text-gray-500">
-            {step.helper}
-          </div>
+        {/* RIGHT: compact View button */}
+        {canView && (
+          <button
+            onClick={() => openViewer(s.key)}
+            className="hidden sm:inline-flex px-2 py-1 text-[11px] rounded border hover:bg-gray-50 whitespace-nowrap"
+            title="View approved content"
+          >
+            View
+          </button>
+        )}
+      </li>
+    );
+  })}
+</ol>
+
+          <div className="mt-3 text-[11px] leading-snug text-gray-500">{step.helper}</div>
         </aside>
 
         {/* Main panel */}
         <section className="lg:col-span-4 border rounded-xl p-4 bg-white">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-bold">{STEPS[stepIndex].title}</h2>
+            <h2 className="text-lg font-bold">{titleForStep(step.key)}</h2>
+
             <div className="flex gap-2">
               <button
                 onClick={() => generate(step.key)}
@@ -543,7 +555,7 @@ export default function OptimizerWizard({
                 className="px-3 py-2 rounded bg-gray-800 text-white disabled:opacity-50"
                 title="Regenerate will try to produce a different variation"
               >
-                {isGenerating ? "Generating..." : (outputs[step.key] ? "Regenerate" : "Generate")}
+                {isGenerating ? "Generating..." : outputs[step.key] ? "Regenerate" : "Generate"}
               </button>
               <button
                 onClick={approveAndNext}
@@ -555,30 +567,37 @@ export default function OptimizerWizard({
             </div>
           </div>
 
-          {isGenerating && (
-  <div className="my-5 flex items-center gap-3">
-    <ApplyWizzLoader size={72} />
-    <span className="text-sm text-slate-600">Optimising your {titleForStep(step.key).toLowerCase()}</span>
-  </div>
-)}
-          {error && (
-            <pre className="mt-3 whitespace-pre-wrap text-red-700 bg-red-50 border border-red-200 p-3 rounded">{error}</pre>
-          )}
-
-          {!outputs[step.key] && !isGenerating && !error && (
-            <p className="text-gray-600">Click <b>Generate</b> to create this section.</p>
-          )}
-
-          {/* All steps (including Experience): single textarea editor */}
-          {outputs[step.key] && (
-            <div className="mt-3">
+          {/* Integrated content well (unchanged) */}
+          <div
+            className={`mt-3 rounded-xl border bg-slate-50/60 min-h-[400px] ${
+              isGenerating ? "flex items-center justify-center p-10" : "p-0"
+            }`}
+          >
+            {error ? (
+              <pre className="m-6 whitespace-pre-wrap text-red-700 bg-red-50 border border-red-200 p-3 rounded max-w-[720px] w-full">
+                {error}
+              </pre>
+            ) : isGenerating ? (
+              <div className="flex flex-col items-center gap-5">
+                <ApplyWizzLoader size={200} />
+                <span className="text-base text-slate-600">
+                  Optimising your {titleForStep(step.key).toLowerCase()}…
+                </span>
+              </div>
+            ) : outputs[step.key] ? (
               <textarea
                 value={outputs[step.key]}
                 onChange={(e) => setOutputs((o) => ({ ...o, [step.key]: e.target.value }))}
-                className="w-full min-h-60 max-h-[60vh] h-72 resize-y border rounded p-3 text-sm"
+                className="block w-full h-[400px] min-h-[360px] resize-y bg-transparent border-0 outline-none focus:ring-0 p-6 text-sm"
               />
-            </div>
-          )}
+            ) : (
+              <div className="p-6">
+                <p className="text-gray-600">
+                  Click <b>Generate</b> to create this section.
+                </p>
+              </div>
+            )}
+          </div>
 
           <div className="mt-4 flex items-center justify-between">
             <button
@@ -590,35 +609,30 @@ export default function OptimizerWizard({
             </button>
             <div className="text-xs text-gray-500">
               {approved[step.key]
-                ? (stepIndex === STEPS.length - 1 ? "Approved — Finishing…" : "Approved")
+                ? stepIndex === STEPS.length - 1
+                  ? "Approved — Finishing…"
+                  : "Approved"
                 : "Awaiting approval"}
             </div>
           </div>
         </section>
       </div>
 
-      {/* Scrollable MODAL for "View" */}
+      {/* Viewer Modal */}
       {viewerOpen && viewerSection && (
         <div className="fixed inset-0 z-50">
-          {/* Backdrop */}
           <div className="absolute inset-0 bg-black/40" onClick={closeViewer} />
-          {/* Modal container */}
           <div className="absolute inset-x-0 top-[6%] mx-auto w-[95%] max-w-3xl">
             <div className="bg-white border rounded-xl shadow-xl overflow-hidden flex flex-col max-h-[88vh]">
-              {/* Sticky header */}
               <div className="flex items-center justify-between p-4 border-b bg-white sticky top-0">
                 <h3 className="font-semibold">{titleForStep(viewerSection!)}</h3>
-                <button
-                  onClick={closeViewer}
-                  className="px-3 py-1 rounded border hover:bg-gray-50 text-sm"
-                >
+                <button onClick={closeViewer} className="px-3 py-1 rounded border hover:bg-gray-50 text-sm">
                   Close
                 </button>
               </div>
-              {/* Scrollable content */}
               <div className="p-4 overflow-auto">
                 <pre className="whitespace-pre-wrap text-sm bg-gray-50 border rounded p-3 overflow-auto">
-{outputs[viewerSection!]}
+                  {outputs[viewerSection!]}
                 </pre>
               </div>
             </div>
@@ -628,3 +642,6 @@ export default function OptimizerWizard({
     </>
   );
 }
+
+
+

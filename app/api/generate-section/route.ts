@@ -721,7 +721,8 @@ Logic:
 
 Example Output:
 HEADLINE
-Full Stack Java Developer | 4+ Years in Spring Boot, React, AWS | Building Scalable Microservices & Cloud-Native Applications`;
+Full Stack Java Developer | 4+ Years in Spring Boot, React, AWS | Building Scalable Microservices & Cloud-Native Applications
+`;
 
     case "about":
       return `Task:
@@ -987,10 +988,10 @@ React.js Essential Training – LinkedIn Learning (2023)
 DevOps Foundations – Coursera (2023)
 SQL for Data Analysis – DataCamp (2023)`;
 
-//     case "banner":
-//       return `Task:
-// Suggest 2–3 LinkedIn banner concepts and one AI-image prompt (1584×396), modern corporate look.
-// - Keep suggestions generic; do NOT reference JD or target role. Plain text only.`;
+    case "banner":
+      return `Task:
+Suggest 2–3 LinkedIn banner concepts and one AI-image prompt (1584×396), modern corporate look.
+- Keep suggestions generic; do NOT reference JD or target role. Plain text only.`;
 
     default:
       return `Task:
