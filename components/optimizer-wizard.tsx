@@ -454,11 +454,12 @@ export default function OptimizerWizard({
   }
 
   function approveAndNext() {
-    const k = step.key;
-    if (!outputs[k]?.trim()) return;
+    const currentKey = step.key;
+    if (!outputs[currentKey]?.trim()) return;
 
-    setApproved((a) => ({ ...a, [k]: true }));
+    setApproved((a) => ({ ...a, [currentKey]: true }));
 
+    // If last step, finish
     if (stepIndex >= STEPS.length - 1) {
       const payload = {
         meta: {
@@ -476,7 +477,17 @@ export default function OptimizerWizard({
       return;
     }
 
-    setStepIndex(stepIndex + 1);
+    // Move to next step and auto-generate that section if empty
+    const nextIdx = stepIndex + 1;
+    const nextKey = STEPS[nextIdx].key;
+
+    setStepIndex(nextIdx);
+
+    // IMPORTANT: only auto-generate if this next section is empty
+    if (!(outputs[nextKey]?.trim())) {
+      // Allow React to commit step change, then trigger generate for the next section
+      setTimeout(() => generate(nextKey), 0);
+    }
   }
 
   function prev() {
