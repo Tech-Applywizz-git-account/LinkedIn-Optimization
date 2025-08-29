@@ -68,7 +68,7 @@ export default function Page() {
       {/* 3) Optimizer */}
       {resumeText ? (
         <section className="border rounded-xl p-4 bg-white">
-          <h2 className="text-lg font-semibold mb-3">3) Generate Experience</h2>
+          
           <MinimalStepWrapper
             resumeText={resumeText}
             parsed={parsed}

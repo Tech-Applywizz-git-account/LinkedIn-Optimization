@@ -17,7 +17,7 @@ type Payload = {
     education: string;
     skills: string;
     certifications: string;
-    banner: string;
+   
   };
   resumeText?: string;
 };
@@ -64,9 +64,7 @@ export default function FinalPage() {
       ``,
       `## Certifications`,
       sections.certifications?.trim() || "",
-      ``,
-      `## Banner Concepts`,
-      sections.banner?.trim() || "",
+     
     ].join("\n");
   }, [payload]);
 
@@ -124,7 +122,7 @@ export default function FinalPage() {
         <Block title="Education" text={sections.education} markdown />
         <Block title="Skills" text={sections.skills} />
         <Block title="Certifications" text={sections.certifications} />
-        <Block title="Banner Concepts" text={sections.banner} />
+          
       </section>
     </main>
   );
