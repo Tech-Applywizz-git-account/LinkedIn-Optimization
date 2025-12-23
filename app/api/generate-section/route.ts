@@ -188,18 +188,6 @@
 // - No sub-bullets beyond this, no emojis, no extra headers.
 
 // Important:
-// - Cover ONLY work experience/employment. Exclude Education, Projects, Certifications, Summary, Skills.
-// - Preserve resume wording and casing for titles/companies as printed.
-// - Return only the Experience content as plain text, with a SINGLE blank line separating each company block.`;
-
-
-//     /* ---------------- INTERNSHIP (per-button) ---------------- */
-//     case "internship":
-//       return `Task:
-// Write ONE LinkedIn EXPERIENCE entry for an INTERNSHIP using ONLY [ROLE CONTEXT] (if present). If [ROLE CONTEXT] is missing, infer just ONE internship from [Resume_Text].
-// - Output strictly for ONE internship.
-// - Format (plain text only, no markdown):
-// Title | Company | Location | Dates
 // - 3–6 bullets focusing on tools used, what you built, and measured impact (facts only).
 // - STRICT: Do not invent any details. Omit missing fields.`;
 
@@ -596,6 +584,190 @@ function sanitizeResume(text: string = ""): string {
     .replace(/[ \t]{2,}/g, " ")
     .replace(/\by=ars\b/gi, "years")
     .replace(/\by-ears\b/gi, "years")
+    .trim();
+}
+
+/* -------------------------- STRICT filter for company buttons -------------------------- */
+
+function normalizeCompanyName(raw: string = ""): string {
+  return raw
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[@]/g, " at ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(
+      /\b(llc|inc|incorporated|corp|corporation|ltd|co|plc|pvt|private|limited)\b/g,
+      ""
+    )
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isBadCompanyName(name: string = ""): boolean {
+  const n = (name || "").trim();
+  if (!n) return true;
+
+  const lower = n.toLowerCase();
+
+  if (["linkedin", "github", "portfolio"].includes(lower)) return true;
+
+  const badTokens = [
+    "professional summary",
+    "summary",
+    "objective",
+    "projects",
+    "project",
+    "education",
+    "certifications",
+    "skills",
+    "technical skills",
+    "contact",
+    "phone",
+    "email",
+    "achievements",
+    "awards",
+    "publications",
+  ];
+  if (badTokens.some((t) => lower.includes(t))) return true;
+
+  if (/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(n)) return true;
+  if (lower.includes("http") || lower.includes("www.")) return true;
+
+  if (/^\s*[A-Za-z .-]+,\s*[A-Za-z .-]+\s*$/.test(n)) return true;
+
+  const letters = n.replace(/[^a-z]/gi, "");
+  if (letters && !/[aeiou]/i.test(letters) && letters.length >= 5) return true;
+
+  return false;
+}
+
+function isValidRole(role: any): boolean {
+  if (!role || typeof role !== "object") return false;
+  const hasTitle = !!(role.title && String(role.title).trim());
+  const hasBullets =
+    Array.isArray(role.bullets) &&
+    role.bullets.some((b: any) => String(b || "").trim());
+  return hasTitle || hasBullets;
+}
+
+function canonicalizeItems(input: any): Array<any> {
+  const arr: any[] = Array.isArray(input) ? input : [];
+  const byKey: Record<string, any> = {};
+
+  for (const item of arr) {
+    const companyRaw = String(item?.company || "").trim();
+    if (!companyRaw || isBadCompanyName(companyRaw)) continue;
+
+    const key = normalizeCompanyName(companyRaw);
+    if (!key) continue;
+
+    const roles = Array.isArray(item?.roles)
+      ? item.roles.filter(isValidRole)
+      : [];
+    if (roles.length === 0) continue;
+
+    if (!byKey[key]) {
+      byKey[key] = {
+        company: companyRaw,
+        company_normalized: key,
+        roles: [],
+      };
+    }
+    byKey[key].roles.push(...roles);
+  }
+
+  Object.values(byKey).forEach((obj: any) => {
+    obj.roles.sort((a: any, b: any) =>
+      String(a.start || "").localeCompare(String(b.start || ""))
+    );
+  });
+
+  return Object.values(byKey);
+}
+
+/* -------------------------- section prompts (unchanged text) -------------------------- */
+
+function sectionPrompt(section: string, _subIndex?: number, _hasRoleContext?: boolean) {
+  switch (section) {
+    case "headline":
+      return `Task:
+From the [Target_Role], [Resume_Text], and [Job_Description_Text], create a "HEADLINE" for a LinkedIn profile.
+
+### Formula:
+[Professional Identity] | [Years of Experience + 3 Core Skills from Resume] | [High-Value keywords/Achievements]
+
+### Constraints:
+- **Title/Identity**: Extract the candidate's professional identity/title STRICTLY from the "PROFESSIONAL SUMMARY" or "SUMMARY" section of the [Resume_Text]. Look for how they describe themselves in the first sentence (e.g., "Construction Management professional").
+- **Experience**: Use the value from [Exact_Years_From_Resume]. Include it as "X+ Years" or "X Years" in the headline.
+- **Skills**: Pick the 3 most relevant skills from [Resume_Text] that align with the [Job_Description_Text].
+- **SEO**: Integrate 2-3 keywords from [Job_Description_Text] ONLY if they exist in [Resume_Text].
+- **Format**: Plain text only. Under 220 characters. No dates in the title. Title Case.
+
+Logic:
+1. Identify the professional identity from the Summary section of [Resume_Text].
+2. Add [Exact_Years_From_Resume] and top skills from [Resume_Text].
+3. Add key specialized skills from [Job_Description_Text] that the candidate actually has.
+4. Ensure the resulting line is concise and professional.
+
+Example:
+Construction Management Professional | 2+ Years in Civil Construction, Project Controls & Budgeting | Procore, Primavera P6 & BIM 360 Expert`;
+
+    case "about":
+      return `Task:
+From the [Target_Role], [Resume_Text], and [Job_Description_Text], create an "ABOUT" section for a LinkedIn profile.
+
+Constraints:
+- 3 short paragraphs:
+  1. Intro: Total years of experience, specialization, and core value proposition (from Resume).
+  2. Body: Skills and measurable achievements (quantified results) STRICTLY from [Resume_Text].
+  3. Closing: Career vision and alignment with [Target_Role].
+- Use ONLY facts from [Resume_Text]. Never invent achievements or metrics.
+- Naturally integrate high-value keywords from [Job_Description_Text] ONLY where they match the user's actual skills in [Resume_Text].
+- Reads like a narrative, not a bullet list.
+- Corporate, formal, and recruiter-friendly.
+- Ensure it is under 2,000 characters.
+
+Logic:
+1. Identify years of experience and specialization from [Resume_Text].
+2. Extract most impactful achievements and technologies STRICTLY from [Resume_Text].
+3. Use [Job_Description_Text] to select which existing skills to emphasize.
+4. Structure into 3 professional paragraphs.
+
+Example Structure (Do not copy these specific facts):
+With over [X] years of experience in [Domain], I specialize in [Skills]...
+At [Company], I [quantifiable achievement from resume]...
+I am now looking to leverage my expertise in [Skill] for [Target_Role] roles...`;
+
+    case "experience":
+      return `Task:
+From the [Resume_Text], create a professional LinkedIn "EXPERIENCE" section optimized for [Target_Role].
+
+### STRICT RULES:
+- Use ONLY facts (titles, companies, metrics, tools) present in [Resume_Text].
+- NEVER invent achievements or pull requirements from [Job_Description_Text] as if they were candidate achievements.
+- Use [Job_Description_Text] ONLY to prioritize keywords or phrase existing resume bullets more effectively.
+
+### Role Formatting:
+- Job Title
+- Company Name | Location | Dates
+- A 1–2 sentence introduction summarizing role scope and impact (from Resume).
+
+### Bullets:
+- 4–6 strong achievement bullets per role.
+- Each bullet MUST:
+  - Start with a powerful action verb.
+  - Quantify results STRICTLY based on [Resume_Text] metrics.
+  - Bold key tools/technologies mentioned in [Resume_Text].
+  - Focus on outcomes.
+
+### Key Achievements:
+- Add a "Key Achievements" subsection ONLY if [Resume_Text] contains 2–3 standout quantified wins for that role.
+
+Logic:
+1. Identify job titles, companies, locations, and dates from [Resume_Text].
+2. Extract measurable achievements and tools STRICTLY from [Resume_Text].
+3. Phrase bullets to include relevant keywords from [Job_Description_Text] ONLY if they apply to the candidate's actual work.
+4. Keep each role concise yet impactful.`;
 
     case "internship":
       return `Task:
