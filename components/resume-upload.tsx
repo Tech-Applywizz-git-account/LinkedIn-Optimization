@@ -5,6 +5,7 @@ import { useDropzone } from "react-dropzone";
 import type { ParsedResume } from "@/lib/resumeParser";
 import { parseResumeText } from "@/lib/resumeParser";
 import { createWorker } from "tesseract.js";
+import { sanitizeLLMText } from "@/lib/sanitize";
 
 interface ResumeUploadProps {
   onParsed: (data: { text: string; parsed: ParsedResume }) => void;
@@ -42,38 +43,48 @@ function ResumeUpload({ onParsed }: ResumeUploadProps) {
   const [error, setError] = useState<string | null>(null);
   const [resumeText, setResumeText] = useState<string | null>(null);
 
-  // 1) Server-first parse (multi-format)
+  // 1) Fast client-side PDF text extraction using pdfjs getTextContent()
+  const extractPdfTextInBrowser = async (file: File): Promise<string> => {
+    const pdfjsLib = await loadPdfJsFromCdn();
+    const ab = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
+    let fullText = "";
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page = await pdf.getPage(p);
+      const content = await page.getTextContent();
+      const pageText = content.items
+        .map((item: any) => item.str ?? "")
+        .join(" ");
+      fullText += pageText + "\n";
+    }
+    return fullText.replace(/\n{3,}/g, "\n\n").trim();
+  };
+
+  // 2) Server parse for DOCX / TXT / RTF / HTML
   const parseViaApi = async (file: File) => {
     const form = new FormData();
     form.append("file", file);
-
     const res = await fetch("/api/parse-resume", { method: "POST", body: form });
     const raw = await res.text();
-
     let data: any = {};
     try { data = JSON.parse(raw); } catch {}
-
     if (!res.ok) {
       const message = (data && (data.error || data.message)) || raw || `HTTP ${res.status}`;
       throw new Error(message);
     }
-    return { text: data.text as string, parsed: data.parsed as ParsedResume };
+    const cleanedText = sanitizeLLMText(data.text as string);
+    return { text: cleanedText, parsed: data.parsed as ParsedResume };
   };
 
-  // 2) OCR fallback for scanned/secured PDFs — **tesseract.js v5 style**
+  // 3) OCR fallback (Tesseract) for scanned/image-only PDFs
   const ocrPdfInBrowser = async (file: File) => {
     setPhase("ocr");
-
     const pdfjsLib = await loadPdfJsFromCdn();
-
     const ab = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
-
-    // v5: create the worker with language directly — no loadLanguage/initialize
     const worker: any = await createWorker("eng");
-
     let out = "";
-    const maxPages = Math.min(pdf.numPages, 15); // safety cap
+    const maxPages = Math.min(pdf.numPages, 15);
     for (let p = 1; p <= maxPages; p++) {
       const page = await pdf.getPage(p);
       const viewport = page.getViewport({ scale: 1.6 });
@@ -82,20 +93,14 @@ function ResumeUpload({ onParsed }: ResumeUploadProps) {
       canvas.width = viewport.width;
       canvas.height = viewport.height;
       await page.render({ canvasContext: ctx!, viewport }).promise;
-
       const dataUrl = canvas.toDataURL("image/png");
       const { data } = await worker.recognize(dataUrl);
       out += "\n" + (data?.text || "");
     }
-
     await worker.terminate();
-
     const cleaned = out.replace(/\r/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
     if (!cleaned) throw new Error("OCR found no readable text. Try exporting a searchable PDF.");
-
-    // Structure OCR text locally
-    const structured = parseResumeText(cleaned);
-    return { text: cleaned, parsed: structured as ParsedResume };
+    return sanitizeLLMText(cleaned);
   };
 
   const handleSubmit = async (file: File) => {
@@ -105,35 +110,38 @@ function ResumeUpload({ onParsed }: ResumeUploadProps) {
       setPhase("parsing");
       setFileName(file.name);
 
-      // A) Try server first
-      try {
-        const { text, parsed } = await parseViaApi(file);
-        setResumeText(text);
-        onParsed({ text, parsed });
-        setPhase("idle");
-        return;
-      } catch (e: any) {
-        // B) If server says it's a scanned/secured PDF, run OCR fallback
-        const msg = String(e?.message || "").toLowerCase();
-        const isPdf =
-          file.type?.toLowerCase().includes("pdf") ||
-          file.name?.toLowerCase().endsWith(".pdf");
-        const looksLikeScanned =
-          msg.includes("failed to parse pdf") ||
-          msg.includes("secured") ||
-          msg.includes("could not extract");
+      const isPdf = file.type?.toLowerCase().includes("pdf") || file.name?.toLowerCase().endsWith(".pdf");
 
-        if (isPdf && looksLikeScanned) {
-          const { text, parsed } = await ocrPdfInBrowser(file);
-          setResumeText(text);
-          onParsed({ text, parsed });
-          setPhase("idle");
-          return;
+      let rawText = "";
+
+      if (isPdf) {
+        // Step 1: Try fast client-side pdfjs extraction (no server needed)
+        try {
+          rawText = await extractPdfTextInBrowser(file);
+        } catch (_e) {
+          rawText = "";
         }
 
-        // Not the scanned-PDF case → bubble up the real error
-        throw e;
+        // Step 2: If client extraction failed or returned empty, try OCR
+        if (!rawText || rawText.trim().length < 50) {
+          rawText = await ocrPdfInBrowser(file);
+        }
+
+        // Apply misread fixes to extracted PDF text
+        const cleanedText = sanitizeLLMText(rawText);
+        const structured = parseResumeText(cleanedText);
+        setResumeText(cleanedText);
+        onParsed({ text: cleanedText, parsed: structured as ParsedResume });
+        setPhase("idle");
+        return;
       }
+
+      // For DOCX / TXT / HTML / RTF — use server API
+      const { text, parsed } = await parseViaApi(file);
+      setResumeText(text);
+      onParsed({ text, parsed });
+      setPhase("idle");
+
     } catch (e: any) {
       console.error("Client parse error:", e);
       setError(e?.message || "Failed to parse resume");
@@ -167,11 +175,12 @@ function ResumeUpload({ onParsed }: ResumeUploadProps) {
 
       <div
         {...getRootProps()}
+        suppressHydrationWarning
         className={`p-6 border-2 border-dashed rounded-lg text-center cursor-pointer ${
           isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"
         }`}
       >
-        <input {...getInputProps()} />
+        <input {...getInputProps()} suppressHydrationWarning />
         {isDragActive ? (
           <p>Drop your resume here…</p>
         ) : (

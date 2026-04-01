@@ -3,13 +3,12 @@
 
 import { encode } from "gpt-tokenizer";
 
-export type LLMModel = "gpt-5-flagship" | "gpt-5-mini" | "gpt-5-nano";
+export type LLMModel = "gpt-4o" | "gpt-4o-mini";
 
-// Pricing (USD) per 1M tokens — adjust if your account uses a different rate
-export const PRICING_USD_PER_1M: Record<LLMModel, { in: number; out: number }> = {
-  "gpt-5-flagship": { in: 1.25, out: 10.0 },
-  "gpt-5-mini":     { in: 0.25, out:  2.0 },
-  "gpt-5-nano":     { in: 0.05, out:  0.4 },
+// Pricing (USD) per 1M tokens — using GPT-4o and GPT-4o-mini rates
+export const PRICING_USD_PER_1M: Record<string, { in: number; out: number }> = {
+  "gpt-4o":      { in: 2.50, out: 10.0 },
+  "gpt-4o-mini": { in: 0.15, out:  0.6 },
 };
 
 // Fast local token counter (approx; API usage is authoritative)
@@ -21,17 +20,17 @@ export function countTokens(text: string): number {
 export function pickBySection(section: string): LLMModel {
   const s = (section || "").toLowerCase();
   // Narrative/nuanced sections → mini
-  if (["about", "experience", "projects", "education"].includes(s)) return "gpt-5-mini";
-  // Short/structured sections → nano
-  if (["headline", "skills", "certifications", "banner"].includes(s)) return "gpt-5-nano";
-  return "gpt-5-mini";
+  if (["about", "experience", "projects", "education"].includes(s)) return "gpt-4o-mini";
+  // Short/structured sections → nano (use mini as well)
+  if (["headline", "skills", "certifications", "banner"].includes(s)) return "gpt-4o-mini";
+  return "gpt-4o-mini";
 }
 
 // Auto picker by input size (keeps cost low while protecting quality)
 export function pickAuto(systemPrompt: string, userPrompt: string): LLMModel {
   const input = countTokens(systemPrompt) + countTokens(userPrompt);
-  // Long inputs (resume + JD etc.) benefit from mini; short prompts can use nano
-  return input > 3000 ? "gpt-5-mini" : "gpt-5-nano";
+  // Long inputs (resume + JD etc.) benefit from mini; short prompts can use mini
+  return input > 3000 ? "gpt-4o-mini" : "gpt-4o-mini";
 }
 
 // INR cost preview (uses a max output budget; real usage returned by API may differ)

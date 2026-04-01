@@ -572,8 +572,70 @@ function whichItem(subIndex?: number) {
 
 /* -------------------------- PDF/Text sanitization -------------------------- */
 
+/** Fix common PDF text extraction garbles (custom font encoding errors) */
+const PDF_MISREAD_FIXES: [RegExp, string][] = [
+  // fi/fl ligature decomposition (must come first)
+  [/ﬁ/g, "fi"], [/ﬂ/g, "fl"], [/ﬀ/g, "ff"], [/ﬃ/g, "ffi"], [/ﬄ/g, "ffl"],
+  // 'Data' garbles (a->o, t->f)
+  [/\bDofa Analyst/gi, "Data Analyst"], [/\bDofa Analysis/gi, "Data Analysis"],
+  [/\bDofa Science/gi, "Data Science"], [/\bDofa Engineer/gi, "Data Engineer"],
+  [/\bDofa Driven/gi, "Data Driven"], [/\bDofa Modeling/gi, "Data Modeling"],
+  [/\bdofa-driven/gi, "data-driven"],
+  [/\bDofa\b/g, "Data"], [/\bdofa\b/g, "data"], [/\bDOFA\b/g, "DATA"],
+  [/\bdota modeling/gi, "data modeling"], [/\bdota validation/gi, "data validation"],
+  [/\bdota preparation/gi, "data preparation"], [/\bdota wrangling/gi, "data wrangling"],
+  [/\bdota quality/gi, "data quality"], [/\bdota sets/gi, "data sets"], [/\bdota\b/g, "data"],
+
+  // 'IBM' / 'Learning' / 'Certificate' garbles
+  [/\bBM Data Analyst/gi, "IBM Data Analyst"], [/\bBM\b/g, "IBM"],
+  [/\bLeaming\b/gi, "Learning"], [/\bCerfiicate\b/gi, "Certificate"],
+  [/\bSpecialzafion\b/gi, "Specialization"], [/\bCerfification\b/gi, "Certification"],
+
+  // 'multi' garbles
+  [/\bmuisource\b/gi, "multisource"], [/\bmuiti/gi, "multi"], [/\bmui source\b/gi, "multisource"],
+
+  // 'reporting'/'report' garbles (t->f)
+  [/\breporfi ng\b/gi, "reporting"], [/\breporfing\b/gi, "reporting"],
+  [/\breporfi\b/gi, "reporti"], [/\breporfi/gi, "reporti"],
+
+  // 'executive' garbles
+  [/\bexecufive\b/gi, "executive"], [/\bexecufion\b/gi, "execution"],
+
+  // 'to' garbles (t->f)
+  [/\bfo support\b/gi, "to support"], [/\bfo build\b/gi, "to build"],
+  [/\bfo deliver\b/gi, "to deliver"], [/\bfo help\b/gi, "to help"],
+
+  // 'analytical' garbles
+  [/\banalyf ical\b/gi, "analytical"], [/\banalyfical\b/gi, "analytical"],
+  [/\banalyf ics\b/gi, "analytics"], [/\banalyfics\b/gi, "analytics"],
+
+  // 'optimization' garbles
+  [/\bopfimiz/gi, "optimiz"], [/\bopfi miz/gi, "optimiz"],
+
+  // '-ation' suffix garbles (a->o, t->f)
+  [/\bvisualizofion\b/gi, "visualization"], [/\bautomofion\b/gi, "automation"],
+  [/\bvalidofion\b/gi, "validation"], [/\bpreparofion\b/gi, "preparation"],
+  [/\bpresentofion\b/gi, "presentation"], [/\boperofional\b/gi, "operational"],
+  [/\bcommunicofion\b/gi, "communication"], [/\borganizofion\b/gi, "organization"],
+  [/\bimplementofion\b/gi, "implementation"], [/\bcollaborofion\b/gi, "collaboration"],
+  [/\bintegrofion\b/gi, "integration"], [/\bdocumentofion\b/gi, "documentation"],
+  [/\btransformofion\b/gi, "transformation"],
+
+  // '-ated' garbles
+  [/\bautomofed\b/gi, "automated"],
+
+  // '-ting' garbles
+  [/\bseffi ng\b/gi, "setting"], [/\bmeefing\b/gi, "meeting"], [/\bproducfing\b/gi, "producing"],
+
+  // Other garbles
+  [/\bstrofegic\b/gi, "strategic"], [/\bplofform\b/gi, "platform"],
+
+  // Space-inserted garbles
+  [/\bda ta\b/gi, "data"], [/\bana lyst\b/gi, "analyst"],
+];
+
 function sanitizeResume(text: string = ""): string {
-  return text
+  let result = text
     .replace(/\u00A0/g, " ")
     .replace(/\uFFFD/g, "-")
     .replace(/[\u2013\u2014]/g, "-")
@@ -585,6 +647,13 @@ function sanitizeResume(text: string = ""): string {
     .replace(/\by=ars\b/gi, "years")
     .replace(/\by-ears\b/gi, "years")
     .trim();
+
+  // Apply PDF misread fixes
+  for (const [pattern, replacement] of PDF_MISREAD_FIXES) {
+    result = result.replace(pattern, replacement);
+  }
+
+  return result;
 }
 
 /* -------------------------- STRICT filter for company buttons -------------------------- */
@@ -694,7 +763,7 @@ function sectionPrompt(section: string, _subIndex?: number, _hasRoleContext?: bo
 From the [Target_Role], [Resume_Text], and [Job_Description_Text], create a "HEADLINE" for a LinkedIn profile.
 
 ### Formula:
-[Professional Identity] | [Years of Experience + 3 Core Skills from Resume] | [High-Value keywords/Achievements]
+[Professional Identity] | [Years of Experience + 3 Core Skills from Resume] | [Short Expertise Phrase]
 
 ### Constraints:
 - **Title/Identity**: Extract the candidate's professional identity/title STRICTLY from the "PROFESSIONAL SUMMARY" or "SUMMARY" section of the [Resume_Text]. Look for how they describe themselves in the first sentence (e.g., "Construction Management professional").
@@ -702,12 +771,14 @@ From the [Target_Role], [Resume_Text], and [Job_Description_Text], create a "HEA
 - **Skills**: Pick the 3 most relevant skills from [Resume_Text] that align with the [Job_Description_Text].
 - **SEO**: Integrate 2-3 keywords from [Job_Description_Text] ONLY if they exist in [Resume_Text].
 - **Format**: Plain text only. Under 220 characters. No dates in the title. Title Case.
+- **STRICT: NO METRICS** — Do NOT include any percentage values (e.g., 35%, 99.9%), dollar amounts, numeric KPIs, or quantified achievements in the headline. The headline should contain ONLY: role/title, years of experience, skill/tool names, and a short expertise phrase. No numbers other than years of experience.
 
 Logic:
 1. Identify the professional identity from the Summary section of [Resume_Text].
 2. Add [Exact_Years_From_Resume] and top skills from [Resume_Text].
 3. Add key specialized skills from [Job_Description_Text] that the candidate actually has.
 4. Ensure the resulting line is concise and professional.
+5. Double-check: the final headline must NOT contain any %, $, or numeric achievement metrics.
 
 Example:
 Construction Management Professional | 2+ Years in Civil Construction, Project Controls & Budgeting | Procore, Primavera P6 & BIM 360 Expert`;
@@ -865,35 +936,76 @@ Logic:
 
     case "skills":
       return `Task:
-From the [Target_Role], [Resume_Text], and [Job_Description_Text], create a "SKILLS" section for a LinkedIn profile that:
-- Lists a minimum of 30 role-relevant skills based on the client’s resume and the job description.
-- Prioritizes high-value keywords recruiters search for in the target role.
-- Groups skills into logical categories: Backend Development, Frontend Development, Cloud & DevOps, Databases, Testing & QA, Monitoring & Logging.
-- Bold the top 10 skills that should be prioritized for LinkedIn endorsements.
-- Avoids soft skills (e.g., teamwork, communication) unless explicitly requested.
-- Formats the output as a clean, comma-separated list for direct LinkedIn input, followed by an endorsement priority note.
+From the [Target_Role], [Resume_Text], and [Job_Description_Text], create a "SKILLS" section for a LinkedIn profile.
 
-Logic:
-1. Extract technical skills and tools from [Resume_Text].
-2. Compare with [Job_Description_Text] to identify missing but relevant skills.
-3. Select the most important 30–35 for LinkedIn SEO.
-4. Bold the top 10 most in-demand and role-defining skills for endorsement focus.`;
+### EXTRACTION RULES (CRITICAL):
+1. Extract EVERY skill mentioned in [Resume_Text] — do NOT skip any. Aim for 30-35 skills minimum.
+2. Also include relevant skills from [Job_Description_Text] that match the candidate's background.
+3. Bold the top 10 most recruiter-valued skills for LinkedIn endorsements.
+4. Return ONLY the skills list + Endorsement Priority line. NO explanations, NO notes.
+
+### CATEGORY RULES (CRITICAL — DO NOT MIX CATEGORIES):
+
+For Data Analyst / Business Analyst roles, use these categories:
+- "Programming & Query Languages": ONLY actual coding/query languages e.g. SQL, Python, R, DAX, M Query.
+  ⚠️ DO NOT put Excel, Power BI, Tableau here — these are TOOLS, not languages.
+- "Data Visualization & BI Tools": Power BI, Tableau, Excel (charts/dashboards), Google Looker Studio, DAX, Dashboard Development, Data Storytelling.
+  ✅ Excel belongs here when used for analysis/reporting, NOT in Programming Languages.
+- "Statistical & Analytical Techniques": Exploratory Data Analysis, Statistical Analysis, Predictive Modeling, Hypothesis Testing, Regression, Time Series Forecasting.
+- "Data Modeling & ETL": Dimensional Modeling, ETL/ELT Workflows, Data Transformation, Data Validation, Data Quality Management.
+- "Databases & Cloud Platforms": SQL Server, PostgreSQL, MySQL, Snowflake, Azure, AWS, Google BigQuery, Cloud Data Warehousing.
+- "Tools & Collaboration": Excel (general), Jira, Confluence, SharePoint, Microsoft Office, Google Workspace, Power Automate.
+
+For Software Developer / Software Engineer / Full Stack Developer roles:
+- MUST use "Backend Development" and "Frontend Development" as distinct categories.
+- Other categories: Cloud & DevOps, Databases, Testing & QA.
+
+For all other roles: infer logical categories from the [Target_Role]. Never mix tools with languages.
+
+### STRICT RULES:
+- "Programming & Query Languages" = ONLY languages/scripts (SQL, Python, R, Java, etc.). NOT tools.
+- "Data Visualization & BI Tools" = All BI tools and Excel when used for reporting.
+- Do NOT put Excel under Programming Languages.
+- Do NOT include "Frontend Development" or "Backend Development" for non-engineering roles.
+- Extract ALL skills from resume, not just the obvious ones.
+
+Output Format:
+SKILLS
+
+[Category 1]: **[Skill 1]**, **[Skill 2]**, [Skill 3]...
+[Category 2]: **[Skill 4]**, [Skill 5]...
+[Category 3]: [Skill 6]...
+
+Endorsement Priority: [Top 10 bolded skills only, comma-separated]
+`;
 
     case "certifications":
       return `Task:
-From the [Target_Role] and [Resume_Text], create a "CERTIFICATIONS" section that:
-- Contains a maximum of 6 certifications
-- Only includes certifications relevant to the target role
-- Selects from trusted providers such as LinkedIn Learning, Coursera, DataCamp, AWS, IBM, Google, Microsoft, etc.
-- Prioritizes certifications covering missing or in-demand skills from the target role’s job description
-- Avoids any "(Free Audit Available)" or cost-related mentions
-- Uses clean recruiter-friendly formatting: [Certification Name] – [Issuing Organization] (Year if available)
+You are performing a DATA EXTRACTION task — NOT a writing task.
+Find the certifications section in [Resume_Text] and copy each certification VERBATIM, character for character.
 
-Logic:
-1. Extract technical skills & tools from [Target_Role] + [Job_Description_Text].
-2. Compare with skills in [Resume_Text].
-3. If a skill is missing, recommend a certification that covers it from a trusted provider.
-4. List certifications that enhance credibility for the role.`;
+### ABSOLUTE RULES (NO EXCEPTIONS):
+- Copy certification names EXACTLY as written. Do NOT paraphrase, shorten, or reword.
+- Do NOT add any certification that is not in [Resume_Text].
+- Do NOT remove any certification that is in [Resume_Text].
+- Do NOT add bullet points, dashes, numbers, or any symbols not in the original.
+- Do NOT add issuing organizations or dates unless they literally appear next to the cert name.
+- Plain text only. One certification per line. No markdown.
+
+### HOW TO EXTRACT:
+Step 1: Find the section in [Resume_Text] labeled "Certifications", "Licenses", "Licenses & Certifications", or similar.
+Step 2: Read each certification name exactly as it is written.
+Step 3: Output each one on its own line, exactly as found — same spelling, same capitalization, same punctuation.
+Step 4: If the resume shows an issuer (e.g. "IBM") or a year next to the cert, include it on the same line.
+Step 5: Do NOT add anything else.
+
+Output Format:
+CERTIFICATIONS
+
+[Exact certification name as written in resume]
+[Exact certification name as written in resume]
+[Exact certification name as written in resume]
+`;
 
     case "banner":
       return `Task:
@@ -1414,9 +1526,13 @@ export async function POST(req: Request) {
           ? 1400
           : section === "headline"
             ? 120
-            : isButtons
-              ? 1200
-              : 600;
+            : section === "skills"
+              ? 1200        // needs room for 30-35 skills across 6 categories + endorsement list
+              : section === "certifications"
+                ? 500       // certifications are short but need full list
+                : isButtons
+                  ? 1200
+                  : 600;
 
     // (Optional) pre-call cost preview
     const inputTokensPreview =

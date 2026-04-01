@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 /** ===== Types from your existing payload ===== */
 type Payload = {
@@ -77,6 +78,12 @@ s = s
 export default function FinalPage() {
   const [payload, setPayload] = useState<Payload | null>(null);
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+  const router = useRouter();
+
+  function startOver() {
+    try { localStorage.removeItem("applywizz_final"); } catch {}
+    router.push("/");
+  }
 
   useEffect(() => {
     try {
@@ -271,7 +278,8 @@ export default function FinalPage() {
   const generatedStr = new Date(meta.generatedAt).toLocaleString();
 
   return (
-    <main className="max-w-5xl mx-auto p-6 space-y-6">
+    <div className="min-h-screen bg-slate-50">
+      <main className="max-w-5xl mx-auto p-6 space-y-6">
       {/* print helpers */}
       <style>{`
         @media print {
@@ -295,6 +303,12 @@ export default function FinalPage() {
 
         {/* Actions are here, not in the header */}
         <div className="flex gap-2 no-print">
+          <button
+            onClick={startOver}
+            className="px-3 py-2 rounded border border-red-300 text-red-600 hover:bg-red-50 font-medium"
+          >
+            ← Start Over
+          </button>
           <button onClick={copyAll} className="px-3 py-2 rounded border">Copy All</button>
           <button onClick={downloadHtml} className="px-3 py-2 rounded border">Download .md</button>
           <button onClick={() => window.print()} className="px-3 py-2 rounded border">Print</button>
@@ -316,6 +330,7 @@ export default function FinalPage() {
         {/* <Block title="Banner Concepts" text={sanitizeText(sections.banner)} /> */}
       </section>
     </main>
+    </div>
   );
 }
 

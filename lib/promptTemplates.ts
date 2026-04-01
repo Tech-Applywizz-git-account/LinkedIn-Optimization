@@ -170,7 +170,6 @@ Data:
 [Resume_Text]: {{RESUME_TEXT}}
 [Job_Description_Text]: {{JOB_DESC}}
 
-Output:
 Return only the section in Markdown.
 `,
 
@@ -179,44 +178,45 @@ You are a LinkedIn optimization expert with 15+ years of experience in corporate
 You work for ApplyWizz, a company that optimizes LinkedIn profiles to rank in the top 1% of recruiter searches.
 
 Task:  
-From the [Target_Role], [Resume_Text], and [Job_Description_Text], create a SKILL section for a LinkedIn profile that follows these rules:
+From the [Target_Role], [Resume_Text], and [Job_Description_Text], create a SKILLS section for a LinkedIn profile that follows these rules:
 
-Requirements
-- List a minimum of 30 role-relevant skills (from Resume_Text and Job_Description_Text).  
-- Group skills into logical categories: Backend Development, Frontend Development, Cloud & DevOps, Databases, Testing & QA, Monitoring & Logging.  
-- Bold the top 10 most critical, recruiter-searched skills for endorsement priority.  
-- Prioritize hard/technical skills; exclude soft skills unless explicitly present in Job_Description_Text.  
-- Ensure skills list is ATS- and LinkedIn-SEO optimized by including in-demand tools, frameworks, and keywords.  
-- Format output as a clean, comma-separated list for direct LinkedIn input.  
+Requirements:
+- List a minimum of 30 role-relevant skills.  
+- Group skills into 4-6 logical categories relevant to the [Target_Role].
+- CRITICAL: Choose categories based on the target role domain:
+  - Software Developer / Engineer / Full Stack: You MUST include "Backend Development" and "Frontend Development" as distinct categories if both are present in the resume/JD.
+  - Data Analyst / Business Analyst: Use Data Analysis & Visualization, Databases & SQL, BI Tools, etc.
+  - For any other role: Infer domain-appropriate categories.
+- Bold the top 10 most critical, recruiter-searched skills within their categories.  
+- Format output as a clean, comma-separated list per category.
+- CRITICAL: Return ONLY the skills list. Do NOT include any "Endorsement Priority" notes or metadata.
 
-Output Format
-SKILLS  
+Output Format:
+SKILLS
 
-Backend Development: [Comma-separated list]  
-Frontend Development: [Comma-separated list]  
-Cloud & DevOps: [Comma-separated list]  
-Databases: [Comma-separated list]  
-Testing & QA: [Comma-separated list]  
-Monitoring & Logging: [Comma-separated list]  
-
-Endorsement Priority: [List the top 10 bolded skills only, without categories]  
-
+[Category 1]: **[Skill 1]**, **[Skill 2]**, [Skill 3]...
+[Category 2]: **[Skill 4]**, [Skill 5]...
+[Category 3]: [Skill 6]...
 `,
 
   certifications: `
 Task:
-"CERTIFICATIONS" (max 6):
-- Only role-relevant, from trusted orgs (LinkedIn Learning, Coursera, AWS, IBM, Google, Microsoft, etc.).
-- Prefer to cover missing/in-demand skills vs JD.
-- Format: Name — Organization (Year if known)
+From the [Resume_Text], create a "CERTIFICATIONS" section that EXACTLY reproduces the certifications already listed in the resume.
+
+STRICT RULES:
+- ONLY include certifications that are EXPLICITLY listed in [Resume_Text].
+- Do NOT add, recommend, or suggest any new certifications.
+- Do NOT modify certification names - reproduce them EXACTLY as they appear in the resume.
+- Do NOT add issuing organizations or years unless they are explicitly stated in [Resume_Text].
+- If the resume has no certifications section, return "No certifications found in resume."
+- Format: List each certification on its own line, exactly as written in the resume.
+- Plain text only.
 
 Data:
-[Target_Role]: {{TARGET_ROLE}}
 [Resume_Text]: {{RESUME_TEXT}}
-[Job_Description_Text]: {{JOB_DESC}}
 
 Output:
-Return only the certifications list.
+Return only the certifications list exactly as found in the resume.
 `,
 
   banner: `

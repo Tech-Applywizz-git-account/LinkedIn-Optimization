@@ -12,8 +12,105 @@ function err(message: string, status = 500, detail?: any) {
   console.error("[parse-resume]", message, detail || "");
   return NextResponse.json({ error: message, detail }, { status });
 }
+/**
+ * Common PDF misread corrections.
+ * pdf-parse sometimes garbles characters due to custom font encodings
+ * (e.g., "Data" → "Dofa", "multisource" → "muisource").
+ * This map fixes known substitutions after extraction.
+  * Ordering matters: longer/more-specific patterns should come first.
+ */
+const PDF_MISREAD_FIXES: [RegExp, string][] = [
+  // ===== Character Level Normalization (Handle font-scrambling) =====
+  // These address the 'a'->'o', 't'->'f', 'n'->'m', 'l'->'i' substitutions generically in common words
+  
+  // 'Data' variations (o->a, f->t)
+  [/D[o0]\s?f\s?[a@]/gi, "Data"],
+  [/d[o0]\s?f\s?[a@]/gi, "data"],
+  [/D[o0]\s?t\s?[a@]/gi, "Data"],
+  [/d[o0]\s?t\s?[a@]/gi, "data"],
+
+  // 'IBM' / 'Learning' / 'Certificate'
+  [/BM\s?D[o0]f[a@]\s?An[a@][i|l]y[s$]t/gi, "IBM Data Analyst"],
+  [/\bBM\b/g, "IBM"],
+  [/Le[a@][m|n]ing/gi, "Learning"],
+  [/Cerfific[a@]fe/gi, "Certificate"],
+  [/Cerfi\s?fic[a@]fe/gi, "Certificate"],
+  [/Specializ[a@]fio[n|m]/gi, "Specialization"],
+  [/Cerfi\s?fic[a@]fion/gi, "Certification"],
+  [/Cerfific[a@]fion/gi, "Certification"],
+
+  // 'Technical' / 'Analytical' / 'Economics'
+  [/Tech[n|m]ic[a@][i|l]/gi, "Technical"],
+  [/An[a@][i|l]yf[i|l]c[a@][i|l]/gi, "Analytical"],
+  [/An[a@][i|l]yfic[a@][i|l]/gi, "Analytical"],
+  [/An[a@][i|l]yfical/gi, "Analytical"],
+  [/Ec[o0][n|m][o0][n|m]ic[s$]/gi, "Economics"],
+
+  // 'multi' / 'source' 
+  [/mu[i|l][s$][o0]urce/gi, "multisource"],
+  [/mu[i|l]fi/gi, "multi"],
+  [/mui\s?source/gi, "multisource"],
+
+  // 'reporting' / 'support'
+  [/repor\s?f\s?ing/gi, "reporting"],
+  [/reporfi\s?ng/gi, "reporting"],
+  [/reporfing/gi, "reporting"],
+  [/reporfi\b/gi, "reporti"],
+  [/fo\s?support/gi, "to support"],
+  [/fo\s?build/gi, "to build"],
+  [/fo\s?deliver/gi, "to deliver"],
+  [/fo\s?help/gi, "to help"],
+
+  // Suffixes (-ation, -ated, -ting)
+  [/iz[o0]fion\b/gi, "ization"],
+  [/mofion\b/gi, "mation"],
+  [/v[a@][i|l][i|l]d[o0]fion/gi, "validation"],
+  [/prep[a@]r[o0]fion/gi, "preparation"],
+  [/presen\s?f[o0]\s?fion/gi, "presentation"],
+  [/oper[o0]fion[a@][i|l]/gi, "operational"],
+  [/com[m|n]u[n|m]ic[o0]fion/gi, "communication"],
+  [/org[a@]niz[o0]fion/gi, "organization"],
+  [/im[p|l][i|l]e[m|n]en\s?f[o0]fion/gi, "implementation"],
+  [/co[i|l][i|l][a@]b[o0]r[o0]fion/gi, "collaboration"],
+  [/in\s?fegr[o0]fion/gi, "integration"],
+  [/docu[m|n]en\s?f[o0]fion/gi, "documentation"],
+  [/f\s?r[a@]nsf[o0]r[m|n][o0]fion/gi, "transformation"],
+
+  // Common space-inserted garbles
+  [/d[a@]\s*t[a@]/gi, "data"],
+  [/an\s*al\s*y\s*st/gi, "analyst"],
+  [/ex\s*per\s*i\s*ence/gi, "experience"],
+];
+
+function applyPdfMisreadFixes(text: string): string {
+  let result = text;
+  for (const [pattern, replacement] of PDF_MISREAD_FIXES) {
+    result = result.replace(pattern, replacement);
+  }
+  return result;
+}
+
 function cleanText(s: string): string {
-  return s.replace(/\r/g, "\n").replace(/\u0000/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+  if (!s) return "";
+  let result = s
+    .replace(/\u00A0/g, " ")      // NBSP -> space
+    .replace(/\u200B/g, "")       // ZWSP -> remove
+    .replace(/\r/g, "\n")
+    .replace(/\u2013/g, "-")      // en-dash -> hyphen
+    .replace(/\u2014/g, "-")      // em-dash -> hyphen
+    .replace(/\u0000/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  // Apply PDF misread fixes
+  const before = result;
+  result = applyPdfMisreadFixes(result);
+  
+  if (before !== result) {
+    console.log("PDF misread fixes applied to text.");
+  }
+  
+  return result;
 }
 
 export async function GET() {
@@ -28,6 +125,13 @@ export async function POST(req: Request) {
 
     const name = (file.name || "").toLowerCase();
     const type = (file.type || "").toLowerCase();
+    const size = file.size;
+
+    console.log(`[parse-resume] Received file: ${name} (${type}), size: ${size} bytes`);
+
+    if (size > 10 * 1024 * 1024) {
+      return err("File too large (max 10MB)", 422);
+    }
 
     let text = "";
 
