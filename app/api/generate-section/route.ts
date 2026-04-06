@@ -920,92 +920,76 @@ Logic:
 
     case "education":
       return `Task:
-From the [Target_Role], [Resume_Text], and [Job_Description_Text], create an "EDUCATION" section for a LinkedIn profile that:
-- Lists degrees in reverse chronological order (most recent first).
-- Includes: Degree Name, University Name, Graduation Year (if available).
-- Adds 1–2 lines of relevant coursework, academic projects, or specializations aligned to the target role.
-- Avoids irrelevant subjects or overly generic phrases like “completed coursework in...”.
-- Presents academic projects as outcome-driven achievements rather than student work.
-- Uses corporate, recruiter-friendly formatting without abbreviations unless standard (e.g., B.Tech).
+From the [Target_Role], [Resume_Text], and [Job_Description_Text], create an "EDUCATION" section for a LinkedIn profile.
+
+### ABSOLUTE RULES (CRITICAL):
+1. **Degrees & Dates**: List ONLY degrees/institutions explicitly in [Resume_Text]. Reproduce timelines EXACTLY (no reformats).
+2. **ACADEMIC CONTENT ONLY**: Under NO circumstances should you mention professional job duties, company projects, or work achievements. 
+3. **DO NOT MIRROR EXPERIENCE**: If you see "Software Engineer at Google" in the resume, DO NOT mention "Google", "scaling systems", or "backend development" in the Education section unless it was an official academic course/project.
+
+### BANNED CONTENT (DO NOT INCLUDE):
+- NO job titles or company names (except the University).
+- NO work-related achievements (e.g., "Increased sales", "Managed team").
+- NO professional tools/languages unless they were part of the degree's academic curriculum.
+
+### FORMAT & INFERENCE:
+If the resume lacks coursework, INFER academic subjects derived ONLY from the degree name.
+TEMPLATE:
+[Degree Name] | [University Name] | [Dates]
+- Core Academic Subjects: [Subject 1], [Subject 2], [Subject 3] (Inferred from degree name)
+- Academic Specialization: [Specialization inferred from degree and role]
+
+### NEGATIVE EXAMPLE (DO NOT DO THIS):
+Master of Science | University X | 2020-2022
+- Led a team of 5 to develop a mobile app. (WRONG - THIS IS WORK EXPERIENCE)
+- Managed cloud infrastructure for Client Y. (WRONG - THIS IS WORK EXPERIENCE)
+
+### POSITIVE EXAMPLE (DO THIS):
+Master of Science | University X | 2020-2022
+- Core Academic Subjects: Advanced Algorithms, Data Structures, Operating Systems.
+- Academic Research: Investigated Neural Network architectures for image classification.
 
 Logic:
-1. Extract degree details from [Resume_Text].
-2. Match relevant courses/projects to skills in [Job_Description_Text].
-3. Reframe academic projects in impact + tools + results format if worth including.
-4. Keep the section clean and easy to scan for recruiters.`;
+1. Extract factual degree/date details.
+2. For each degree, generate/extract ONLY ACADEMIC subjects or scholarly focus areas.
+3. Keep the section strictly focused on your studies, not your jobs.`;
 
     case "skills":
       return `Task:
 From the [Target_Role], [Resume_Text], and [Job_Description_Text], create a "SKILLS" section for a LinkedIn profile.
 
-### EXTRACTION RULES (CRITICAL):
-1. Extract EVERY skill mentioned in [Resume_Text] — do NOT skip any. Aim for 30-35 skills minimum.
-2. Also include relevant skills from [Job_Description_Text] that match the candidate's background.
-3. Bold the top 10 most recruiter-valued skills for LinkedIn endorsements.
-4. Return ONLY the skills list + Endorsement Priority line. NO explanations, NO notes.
+### EXTRACTION RULES:
+1. Extract EVERY skill mentioned in [Resume_Text] — aim for 30-35 skills minimum.
+2. Include relevant skills from [Job_Description_Text] ONLY if they match the candidate's existing background in [Resume_Text].
+3. Bold the top 10 most critical, recruiter-valued skills for LinkedIn SEO.
+4. Return ONLY a single comma-separated list for all skills (no categories/groups/titles).
+5. Output must be a single continuous paragraph of skills.
 
-### CATEGORY RULES (CRITICAL — DO NOT MIX CATEGORIES):
-
-For Data Analyst / Business Analyst roles, use these categories:
-- "Programming & Query Languages": ONLY actual coding/query languages e.g. SQL, Python, R, DAX, M Query.
-  ⚠️ DO NOT put Excel, Power BI, Tableau here — these are TOOLS, not languages.
-- "Data Visualization & BI Tools": Power BI, Tableau, Excel (charts/dashboards), Google Looker Studio, DAX, Dashboard Development, Data Storytelling.
-  ✅ Excel belongs here when used for analysis/reporting, NOT in Programming Languages.
-- "Statistical & Analytical Techniques": Exploratory Data Analysis, Statistical Analysis, Predictive Modeling, Hypothesis Testing, Regression, Time Series Forecasting.
-- "Data Modeling & ETL": Dimensional Modeling, ETL/ELT Workflows, Data Transformation, Data Validation, Data Quality Management.
-- "Databases & Cloud Platforms": SQL Server, PostgreSQL, MySQL, Snowflake, Azure, AWS, Google BigQuery, Cloud Data Warehousing.
-- "Tools & Collaboration": Excel (general), Jira, Confluence, SharePoint, Microsoft Office, Google Workspace, Power Automate.
-
-For Software Developer / Software Engineer / Full Stack Developer roles:
-- MUST use "Backend Development" and "Frontend Development" as distinct categories.
-- Other categories: Cloud & DevOps, Databases, Testing & QA.
-
-For all other roles: infer logical categories from the [Target_Role]. Never mix tools with languages.
-
-### STRICT RULES:
-- "Programming & Query Languages" = ONLY languages/scripts (SQL, Python, R, Java, etc.). NOT tools.
-- "Data Visualization & BI Tools" = All BI tools and Excel when used for reporting.
-- Do NOT put Excel under Programming Languages.
-- Do NOT include "Frontend Development" or "Backend Development" for non-engineering roles.
-- Extract ALL skills from resume, not just the obvious ones.
-
-Output Format:
+### OUTPUT FORMAT:
 SKILLS
 
-[Category 1]: **[Skill 1]**, **[Skill 2]**, [Skill 3]...
-[Category 2]: **[Skill 4]**, [Skill 5]...
-[Category 3]: [Skill 6]...
+**[Skill 1]**, **[Skill 2]**, [Skill 3], [Skill 4], [Skill 5], **[Skill 10]**, [Skill 11]...
 
-Endorsement Priority: [Top 10 bolded skills only, comma-separated]
-`;
+Endorsement Priority: [Top 10 bolded skills only, comma-separated]`;
 
     case "certifications":
       return `Task:
-You are performing a DATA EXTRACTION task — NOT a writing task.
-Find the certifications section in [Resume_Text] and copy each certification VERBATIM, character for character.
+Extract the "CERTIFICATIONS" section from [Resume_Text] and reproduce them clearly.
 
-### ABSOLUTE RULES (NO EXCEPTIONS):
-- Copy certification names EXACTLY as written. Do NOT paraphrase, shorten, or reword.
-- Do NOT add any certification that is not in [Resume_Text].
-- Do NOT remove any certification that is in [Resume_Text].
-- Do NOT add bullet points, dashes, numbers, or any symbols not in the original.
-- Do NOT add issuing organizations or dates unless they literally appear next to the cert name.
-- Plain text only. One certification per line. No markdown.
-
-### HOW TO EXTRACT:
-Step 1: Find the section in [Resume_Text] labeled "Certifications", "Licenses", "Licenses & Certifications", or similar.
-Step 2: Read each certification name exactly as it is written.
-Step 3: Output each one on its own line, exactly as found — same spelling, same capitalization, same punctuation.
-Step 4: If the resume shows an issuer (e.g. "IBM") or a year next to the cert, include it on the same line.
-Step 5: Do NOT add anything else.
+### RULES (NO EXCEPTIONS):
+- Reproduce the exact certification name as it appears in the resume.
+- Include the issuing organization for each certification (e.g., Coursera, Microsoft, AWS, Oracle) if present or clearly associated in the resume.
+- Format: Certification Name – Issuing Organization (Year)
+- If year is not mentioned, omit it.
+- Each certification on its own line.
+- Do NOT add certifications not present in [Resume_Text].
+- Return "No certifications found" if the resume is empty in this regard.
 
 Output Format:
 CERTIFICATIONS
 
-[Exact certification name as written in resume]
-[Exact certification name as written in resume]
-[Exact certification name as written in resume]
-`;
+[Certification 1] – [Issuing Org] ([Year])
+[Certification 2] – [Issuing Org] ([Year])`;
 
     case "banner":
       return `Task:
