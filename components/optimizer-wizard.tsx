@@ -409,6 +409,11 @@ export default function OptimizerWizard({
     education: 0, skills: 0, certifications: 0,
   });
 
+  const [history, setHistory] = useState<Record<SectionKey, string[]>>({
+    headline: [], about: [], experience: [], projects: [],
+    education: [], skills: [], certifications: [],
+  });
+
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerSection, setViewerSection] = useState<SectionKey | null>(null);
   const step = STEPS[stepIndex];
@@ -443,6 +448,7 @@ export default function OptimizerWizard({
       const { content } = await generateWithVariation(payload, prev ? [prev] : []);
       if (!content?.trim()) throw new Error("No content returned for this section.");
 
+      setHistory((h) => ({ ...h, [section]: [...(h[section] || []), content] }));
       setOutputs((o) => ({ ...o, [section]: content }));
       setRegenCount((c) => ({ ...c, [section]: nextVariation }));
     } catch (err: any) {
@@ -578,6 +584,32 @@ export default function OptimizerWizard({
             </div>
           </div>
 
+          {/* Versions */}
+          {history[step.key]?.length > 1 && !isGenerating && !error && (
+            <div className="flex items-center gap-2 mb-3 px-1">
+              <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Versions</span>
+              <div className="flex gap-1.5 flex-wrap">
+                {history[step.key].map((verText, idx) => {
+                  const isActive = outputs[step.key] === verText;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => setOutputs((o) => ({ ...o, [step.key]: verText }))}
+                      className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-medium transition-all ${
+                        isActive
+                          ? "bg-blue-600 text-white shadow-md ring-2 ring-blue-200"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:shadow-sm"
+                      }`}
+                      title={`Load Version ${idx + 1}`}
+                    >
+                      {idx + 1}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Integrated content well (unchanged) */}
           <div
             className={`mt-3 rounded-xl border bg-slate-50/60 min-h-[400px] ${
@@ -611,14 +643,28 @@ export default function OptimizerWizard({
           </div>
 
           <div className="mt-4 flex items-center justify-between">
-            <button
-              onClick={prev}
-              disabled={isGenerating || stepIndex === 0}
-              className="px-3 py-2 rounded border disabled:opacity-50"
-            >
-              Back
-            </button>
-            <div className="text-xs text-gray-500">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={prev}
+                disabled={isGenerating || stepIndex === 0}
+                className="px-4 py-2 rounded border disabled:opacity-50 text-sm font-medium hover:bg-gray-50 transition-colors"
+              >
+                Back
+              </button>
+              {outputs[step.key] && (
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(outputs[step.key]);
+                  }}
+                  className="px-3 py-2 rounded border bg-white hover:bg-gray-50 text-sm font-medium flex items-center gap-1.5 transition-colors shadow-sm text-gray-700"
+                  title="Copy generated content"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                  Copy
+                </button>
+              )}
+            </div>
+            <div className="text-xs text-gray-500 font-medium">
               {approved[step.key]
                 ? stepIndex === STEPS.length - 1
                   ? "Approved — Finishing…"
