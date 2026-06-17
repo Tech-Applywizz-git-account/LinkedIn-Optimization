@@ -811,34 +811,32 @@ I am now looking to leverage my expertise in [Skill] for [Target_Role] roles...`
 
     case "experience":
       return `Task:
-From the [Resume_Text], create a professional LinkedIn "EXPERIENCE" section optimized for [Target_Role].
+You are an expert LinkedIn profile writer. Analyze the [Resume_Text] and extract all relevant information for the LinkedIn "Experience" section.
 
-### STRICT RULES:
-- Use ONLY facts (titles, companies, metrics, tools) present in [Resume_Text].
-- NEVER invent achievements or pull requirements from [Job_Description_Text] as if they were candidate achievements.
-- Use [Job_Description_Text] ONLY to prioritize keywords or phrase existing resume bullets more effectively.
+Instructions:
+1. Identify all work experiences, internships, freelance work, volunteer work, and practical training.
+2. For each experience, provide:
+   - Job Title
+   - Company/Organization Name
+   - Employment Type (Full-time, Internship, Freelance, Contract, Volunteer, etc.)
+   - Start Date and End Date (if available)
+   - Location (if available)
+   - A professional LinkedIn-ready description in 3-6 bullet points highlighting responsibilities, technologies used, achievements, and impact.
+3. CRITICAL: DO NOT copy-paste bullet points from the resume. You must REWRITE, ELEVATE, and PARAPHRASE the content to sound like an expert-level, highly professional LinkedIn profile. Transform basic duties into impactful achievements. Expand on the existing points to sound more sophisticated while strictly preserving the underlying facts.
+4. Use strong action verbs such as Developed, Implemented, Designed, Optimized, Integrated, Automated, Collaborated, and Delivered.
+5. Quantify achievements whenever possible.
+6. Do not invent facts or metrics that are not present in the resume, but DO significantly improve the vocabulary and sentence structure.
+7. If dates, locations, or employment types are missing, mark them as "Not Specified".
 
-### Role Formatting:
-- Job Title
-- Company Name | Location | Dates
-- A 1–2 sentence introduction summarizing role scope and impact (from Resume).
+Output Format:
+**[Job Title] **
+* [Company/Organization Name]
+* [Location] | [Duration] | [Employment Type]
+* [Expert-level rewritten bullet point 1]
+* [Expert-level rewritten bullet point 2]
+* [Expert-level rewritten bullet point 3]
 
-### Bullets:
-- 4–6 strong achievement bullets per role.
-- Each bullet MUST:
-  - Start with a powerful action verb.
-  - Quantify results STRICTLY based on [Resume_Text] metrics.
-  - Bold key tools/technologies mentioned in [Resume_Text].
-  - Focus on outcomes.
-
-### Key Achievements:
-- Add a "Key Achievements" subsection ONLY if [Resume_Text] contains 2–3 standout quantified wins for that role.
-
-Logic:
-1. Identify job titles, companies, locations, and dates from [Resume_Text].
-2. Extract measurable achievements and tools STRICTLY from [Resume_Text].
-3. Phrase bullets to include relevant keywords from [Job_Description_Text] ONLY if they apply to the candidate's actual work.
-4. Keep each role concise yet impactful.`;
+(Repeat for each experience)`;
 
     case "internship":
       return `Task:
@@ -903,20 +901,30 @@ Rules:
 
     case "projects":
       return `Task:
-From the [Target_Role], [Resume_Text], and [Job_Description_Text], create a "PROJECTS" section for a LinkedIn profile that:
-- Lists only role-relevant academic, freelance, or personal projects that demonstrate skills for the target role.
-- Uses the format: Project Title – (Tools & Tech Used)
-- Each project should have 2–3 bullet points starting with action verbs.
-- Each bullet must highlight measurable results, real-world impact, or performance improvements.
-- Bold key tools & technologies inline for LinkedIn SEO (e.g., Spring Boot, AWS EC2, React.js).
-- Avoid “student project” language; make it outcome-driven and professional.
-- Keep it concise, corporate, and recruiter-friendly.
+You are an expert LinkedIn profile writer. Analyze the [Resume_Text] and extract all relevant information for the LinkedIn "Projects" section.
 
-Logic:
-1. From [Resume_Text], identify projects that use tools, technologies, or skills from [Job_Description_Text].
-2. Reframe each project as a professional achievement with tangible results.
-3. Highlight relevant keywords for LinkedIn search optimization.
-4. Remove filler words; focus on impact and skills.`;
+Instructions:
+1. Identify all technical and academic projects.
+2. For each project, provide:
+   - Project Name
+   - Project Description (LinkedIn-ready)
+   - Technologies Used
+   - Key Features
+   - Major Contributions
+   - Outcomes or Achievements
+3. CRITICAL: DO NOT copy-paste text from the resume. You must REWRITE, ELEVATE, and PARAPHRASE the content to sound like an expert-level, highly professional LinkedIn profile. Transform basic project descriptions into impactful achievements. Expand on the existing points to sound more sophisticated while strictly preserving the underlying facts.
+4. Use strong action verbs such as Developed, Implemented, Designed, Optimized, Integrated, Automated, Collaborated, and Delivered.
+5. Quantify achievements whenever possible.
+6. Do not invent facts or metrics that are not present in the resume, but DO significantly improve the vocabulary and sentence structure.
+
+Output Format:
+**[Project Name]**
+* Technologies: [Tech 1, Tech 2, etc.]
+* [Expert-level rewritten bullet point 1 detailing Key Features]
+* [Expert-level rewritten bullet point 2 detailing Contributions]
+* [Expert-level rewritten bullet point 3 detailing Achievements]
+
+(Repeat for each project)`;
 
     case "education":
       return `Task:
