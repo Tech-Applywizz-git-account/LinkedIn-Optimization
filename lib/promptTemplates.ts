@@ -5,9 +5,20 @@ You are a LinkedIn optimization expert with 15+ years of experience in corporate
 You work for ApplyWizz, a company that optimizes LinkedIn profiles to rank in the top 1% of recruiter searches.
 
 Task:
-Write a LinkedIn Headline that effectively communicates the candidate's qualifications, work experience, and unique value. Act as an expert writer fluent in advanced corporate English, strategic phrasal verbs, and industry keywords.
+Write a LinkedIn Headline that effectively communicates the candidate's qualifications, work experience, and unique value, optimized to the highest standard by a LinkedIn branding expert.
 
-CRITICAL INSTRUCTION: Do NOT copy the exact phrasing or sentences from the resume [Resume_Text]. Rewrite and rephrase everything to be completely different from the source text, expressing the candidate's value with sophisticated corporate vocabulary and recruiter-friendly keywords.
+Format:
+[Keyword 1] | [Keyword 2] | [Keyword 3] | ... | [Sharing/Doing Phrase]
+
+Instructions:
+- Extract and highlight the most essential keywords of 1, 2, or 3 words each from the resume [Resume_Text] (such as job titles, core specializations, tools, and technical skills).
+- You MUST add all essential keywords that are critical for industry SEO and recruiter search optimization based on the candidate's background.
+- Separate each keyword or phrase strictly using a vertical line ("|").
+- Every individual keyword or phrase must strictly be short (1 to 3 words maximum).
+- End the headline with a custom, high-impact phrase starting with "Sharing..." or similar, describing what the candidate shares, builds, or delivers (e.g., "Sharing Dev Insights, Roadmaps & Coding Tips" or "Sharing Tech Solutions, Best Practices & System Designs").
+- Do not repeat or copy sentences verbatim from the resume. Use sophisticated, high-impact corporate terminology.
+- STRICTLY FORBIDDEN: Do NOT include the candidate's name or any other personal names in the headline.
+- Output ONLY the final headline text (no labels, no quotes, no markdown formatting like asterisks or code fences).
 
 Data:
 [Target_Role]: {{TARGET_ROLE}}
@@ -15,7 +26,6 @@ Data:
 [Job_Description_Text]: {{JOB_DESC}}
 
 Output:
-Return ONLY the final headline text (no labels, no quotes).
 `,
 
   about: `
@@ -31,6 +41,7 @@ Paragraph 3: Share future career goals and plans (aligned with [Target_Role] and
 Act as a pro expert LinkedIn Branding Consultant and a master of professional English, using advanced phrasal verbs and industry-specific keywords.
 
 CRITICAL INSTRUCTION: Do NOT repeat the exact sentences or copy the phrasing from the resume [Resume_Text]. Rephrase all accomplishments, education, and experiences to be completely different from the source text, presenting them with elevated vocabulary and smooth transitions.
+STRICTLY FORBIDDEN: Do NOT mention the candidate's name or any other personal names from the resume anywhere in the text.
 
 Data:
 [Target_Role]: {{TARGET_ROLE}}
@@ -54,6 +65,7 @@ Improve the LinkedIn Experience section. For each role:
 
 Act as an expert corporate resume writer.
 CRITICAL INSTRUCTION: STRICTLY do NOT repeat the exact same sentences, descriptions, or phrasing from the resume [Resume_Text]. Rewrite, elevate, and reformulate the content entirely to be different from the source text while preserving the core factual details and metrics. Transform simple task descriptions into high-impact achievements using active phrasal verbs and professional terminology.
+STRICTLY FORBIDDEN: Do NOT include any personal names (including the candidate's name, managers, coworkers, or references) from the resume in any experience entry.
 
 Output Template:
 EXPERIENCE
@@ -90,28 +102,30 @@ Style
 - Avoid any references to “student project,” “academic,” or “coursework.”  
 - Do not use stars, quotes, or decorative symbols.  
 - Integrate high-value keywords from [Job_Description_Text] to boost LinkedIn search ranking.  
+- STRICTLY FORBIDDEN: Do NOT include any personal names from the resume in any project description.  
 
 Output Format
 PROJECTS  
 
 [Project Title] – (Tech Stack)  
-- [Achievement bullet 1]  
-- [Achievement bullet 2]  
-- [Achievement bullet 3]  
+• [Achievement bullet 1]  
+• [Achievement bullet 2]  
+• [Achievement bullet 3]  
 
 [Next Project Title] – (Tech Stack)  
-- [Achievement bullet 1]  
-- [Achievement bullet 2]  
-- [Achievement bullet 3]  
+• [Achievement bullet 1]  
+• [Achievement bullet 2]  
+• [Achievement bullet 3]  
 
 `,
 
   education: `
 Task:
 "EDUCATION" in reverse chronological order:
-- Degree — University (Year)
+- Degree — University (Location) (Year)
 - 1–2 lines relevant coursework/projects aligned to role; outcome-driven.
 - Corporate format.
+- STRICTLY FORBIDDEN: Do NOT include any personal names in this section.
 
 Data:
 [Target_Role]: {{TARGET_ROLE}}

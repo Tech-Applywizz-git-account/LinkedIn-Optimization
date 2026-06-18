@@ -546,7 +546,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "" });
 
 // ---------- System prompt ----------
 const SYSTEM_PROMPT =
-  "You are a LinkedIn optimization expert with 15+ years in corporate career branding for ApplyWizz. Write corporate, recruiter-friendly, keyword-rich content with measurable outcomes. Output plain text only unless JSON is explicitly required.";
+  "You are a LinkedIn optimization expert with 15+ years in corporate career branding for ApplyWizz. Write corporate, recruiter-friendly, keyword-rich content with measurable outcomes. Output plain text only unless JSON is explicitly required. STRICT RULE: Do not include any personal names in the generated content.";
 
 /* -------------------------- Prompt helpers (unchanged for non-experience) -------------------------- */
 
@@ -559,7 +559,8 @@ Formatting rules (VERY IMPORTANT):
 - Bullets (if any) must start with "- " (dash+space) — no emojis.
 - Never invent facts. [Resume_Text] is your ONLY source of truth for achievements, roles, and skills.
 - Use [Job_Description_Text] and [Target_Role] ONLY for keyword optimization and tone; NEVER treat JD requirements as things the user has done if they aren't in the resume.
-- If a requested detail is missing from the resume, OMIT it instead of guessing.`;
+- If a requested detail is missing from the resume, OMIT it instead of guessing.
+- STRICTLY FORBIDDEN: Do NOT include any personal names (including the candidate's own name, managers, colleagues, clients, or references) from the resume in any generated section. Maintain professional, role-focused language without using personal names.`;
 }
 
 function whichItem(subIndex?: number) {
@@ -760,14 +761,18 @@ function sectionPrompt(section: string, _subIndex?: number, _hasRoleContext?: bo
   switch (section) {
     case "headline":
       return `Task:
-Act as a LinkedIn optimization expert and a professional writer fluent in advanced corporate English, strategic phrasal verbs, and industry keywords. Write a LinkedIn Headline that effectively communicates the candidate's qualifications, work experience, and unique value. 
+Write a LinkedIn Headline that effectively communicates the candidate's qualifications, work experience, and unique value, optimized to the highest standard by a LinkedIn branding expert.
 
-CRITICAL INSTRUCTION: Do NOT copy the exact phrasing or sentences from the resume [Resume_Text]. Rewrite and rephrase everything to be completely different from the source text, expressing the candidate's value with sophisticated corporate vocabulary and recruiter-friendly keywords.
+Format:
+[Keyword 1] | [Keyword 2] | [Keyword 3] | ... | [Sharing/Doing Phrase]
 
-### Constraints:
-- Use keywords relevant to their industry and job title from the resume [Resume_Text] and [Job_Description_Text], but express them with a completely fresh, polished vocabulary.
-- Focus on professional qualifications, work experience, and unique value.
-- Do NOT invent credentials or years of experience.
+Instructions:
+- Extract and highlight the most essential keywords of 1, 2, or 3 words each from the resume [Resume_Text] (such as job titles, core specializations, tools, and technical skills).
+- You MUST add all essential keywords that are critical for industry SEO and recruiter search optimization based on the candidate's background.
+- Separate each keyword or phrase strictly using a vertical line ("|").
+- Every individual keyword or phrase must strictly be short (1 to 3 words maximum).
+- End the headline with a custom, high-impact phrase starting with "Sharing..." or similar, describing what the candidate shares, builds, or delivers (e.g., "Sharing Dev Insights, Roadmaps & Coding Tips" or "Sharing Tech Solutions, Best Practices & System Designs").
+- Do not repeat or copy sentences verbatim from the resume. Use sophisticated, high-impact corporate terminology.
 - Format: Plain text only, under 220 characters. No markdown formatting (no asterisks, quotes, or HTML tags). Only output the headline itself.`;
 
     case "about":
@@ -890,33 +895,27 @@ You are an expert LinkedIn profile writer. Analyze the [Resume_Text] and extract
 
 Instructions:
 1. Identify all technical and academic projects.
-2. For each project, provide:
-   - Project Name
-   - Project Description (LinkedIn-ready)
-   - Technologies Used
-   - Key Features
-   - Major Contributions
-   - Outcomes or Achievements
+2. For each project, provide a Project Title, the Tech Stack/Tools used, and 2-3 high-impact, expert-level rewritten bullet points.
 3. CRITICAL: DO NOT copy-paste text from the resume. You must REWRITE, ELEVATE, and PARAPHRASE the content to sound like an expert-level, highly professional LinkedIn profile. Transform basic project descriptions into impactful achievements. Expand on the existing points to sound more sophisticated while strictly preserving the underlying facts.
 4. Use strong action verbs such as Developed, Implemented, Designed, Optimized, Integrated, Automated, Collaborated, and Delivered.
-5. Quantify achievements whenever possible.
+5. Quantify achievements whenever possible (e.g., performance improvements, efficiency gains, numbers, metrics).
 6. Do not invent facts or metrics that are not present in the resume, but DO significantly improve the vocabulary and sentence structure.
+7. Separate each bullet point with the unicode bullet symbol "• " so they are compatible with direct copy-pasting to LinkedIn. Do NOT use markdown list symbols like "*" or "-" as they get stripped or display as raw asterisks.
 
 Output Format:
-**[Project Name]**
-* Technologies: [Tech 1, Tech 2, etc.]
-* [Expert-level rewritten bullet point 1 detailing Key Features]
-* [Expert-level rewritten bullet point 2 detailing Contributions]
-* [Expert-level rewritten bullet point 3 detailing Achievements]
+[Project Title] – ([Tech Stack & Tools Used])
+• [Expert-level rewritten bullet point 1 detailing Key Features and Tools used]
+• [Expert-level rewritten bullet point 2 detailing Contributions and Technical implementation]
+• [Expert-level rewritten bullet point 3 detailing Achievements and business/metric impact]
 
-(Repeat for each project)`;
+(Leave one blank line between projects)`;
 
     case "education":
       return `Task:
 From the [Target_Role], [Resume_Text], and [Job_Description_Text], create an "EDUCATION" section for a LinkedIn profile.
 
 ### ABSOLUTE RULES (CRITICAL):
-1. **Degrees & Dates**: List ONLY degrees/institutions explicitly in [Resume_Text]. Reproduce timelines EXACTLY (no reformats).
+1. **Degrees, Locations & Dates**: List ONLY degrees, institutions, and locations explicitly in [Resume_Text]. Reproduce locations and timelines EXACTLY (no reformats).
 2. **ACADEMIC CONTENT ONLY**: Under NO circumstances should you mention professional job duties, company projects, or work achievements. 
 3. **DO NOT MIRROR EXPERIENCE**: If you see "Software Engineer at Google" in the resume, DO NOT mention "Google", "scaling systems", or "backend development" in the Education section unless it was an official academic course/project.
 
@@ -928,22 +927,22 @@ From the [Target_Role], [Resume_Text], and [Job_Description_Text], create an "ED
 ### FORMAT & INFERENCE:
 If the resume lacks coursework, INFER academic subjects derived ONLY from the degree name.
 TEMPLATE:
-[Degree Name] | [University Name] | [Dates]
+[Degree Name] | [University Name] | [Location, if available] | [Dates]
 - Core Academic Subjects: [Subject 1], [Subject 2], [Subject 3] (Inferred from degree name)
 - Academic Specialization: [Specialization inferred from degree and role]
 
 ### NEGATIVE EXAMPLE (DO NOT DO THIS):
-Master of Science | University X | 2020-2022
+Master of Science | University X | Location Y | 2020-2022
 - Led a team of 5 to develop a mobile app. (WRONG - THIS IS WORK EXPERIENCE)
 - Managed cloud infrastructure for Client Y. (WRONG - THIS IS WORK EXPERIENCE)
 
 ### POSITIVE EXAMPLE (DO THIS):
-Master of Science | University X | 2020-2022
+Master of Science | University X | Location Y | 2020-2022
 - Core Academic Subjects: Advanced Algorithms, Data Structures, Operating Systems.
 - Academic Research: Investigated Neural Network architectures for image classification.
 
 Logic:
-1. Extract factual degree/date details.
+1. Extract factual degree, location, and date details.
 2. For each degree, generate/extract ONLY ACADEMIC subjects or scholarly focus areas.
 3. Keep the section strictly focused on your studies, not your jobs.`;
 

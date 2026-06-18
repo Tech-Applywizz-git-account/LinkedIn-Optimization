@@ -144,11 +144,8 @@ function extractExperience(resumeText: string): number {
 }
 
 function generateHeadline(resumeText: string, targetRole: string, keywords: string[]): string {
-  const experience = extractExperience(resumeText)
-  const expText = experience === 1 ? "1+ Year" : `${experience}+ Years`
-  const topKeywords = keywords.slice(0, 3).join(", ")
-
-  return `${targetRole} | Specialized in ${topKeywords} | ${expText} Experience | Delivering Strategic Value`
+  const topKeywords = keywords.slice(0, 4).join(" | ")
+  return `${targetRole} | ${topKeywords} | Sharing Dev Insights, Roadmaps & Tech Solutions`
 }
 
 function generateAbout(resumeText: string, targetRole: string, keywords: string[]): string {
@@ -242,7 +239,7 @@ function generateEducation(resumeText: string, targetRole: string, keywords: str
 • Keep descriptions concise but impactful
 
 📋 EXAMPLE FORMAT:
-[Degree] in [Field] | [University Name] | [Graduation Year]
+[Degree] in [Field] | [University Name] | [Location] | [Graduation Year]
 • Relevant Coursework: [List 3-4 courses related to ${targetRole}]
 • Academic Achievement: [GPA, honors, or special recognition]
 • Key Project: [Brief description of relevant capstone/research project]`
