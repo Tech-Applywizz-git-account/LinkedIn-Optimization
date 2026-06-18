@@ -8,9 +8,14 @@ Task:
 Write a LinkedIn Headline that effectively communicates the candidate's qualifications, work experience, and unique value, optimized to the highest standard by a LinkedIn branding expert.
 
 Format:
-[Keyword 1] | [Keyword 2] | [Keyword 3] | ... | [Sharing/Doing Phrase]
+[Seniority Level] [Keyword 1] | [Keyword 2] | [Keyword 3] | ... | [Sharing/Doing Phrase]
 
 Instructions:
+- Conditionally determine the candidate's experience/seniority level based on [Exact_Years_From_Resume] or [Resume_Text], and prefix the very first keyword in the headline with it:
+  - Less than 2 years of experience: Prefix with "Junior" or "Associate" (e.g., "Junior Software Engineer", "Associate Data Analyst").
+  - 2 to 5 years of experience: Prefix with "Mid-Level" (e.g., "Mid-Level MERN Developer").
+  - 5 to 8 years of experience: Prefix with "Senior" (e.g., "Senior Backend Engineer").
+  - 8+ years of experience: Prefix with "Senior", "Lead", or "Principal" depending on their exact roles.
 - Extract and highlight the most essential keywords of 1, 2, or 3 words each from the resume [Resume_Text] (such as job titles, core specializations, tools, and technical skills).
 - You MUST add all essential keywords that are critical for industry SEO and recruiter search optimization based on the candidate's background.
 - Separate each keyword or phrase strictly using a vertical line ("|").
@@ -33,15 +38,27 @@ You are a LinkedIn optimization expert with 15+ years of experience in corporate
 You work for ApplyWizz, a company that optimizes LinkedIn profiles to rank in the top 1% of recruiter searches.
 
 Task:
-Write a LinkedIn About Section using the following format:
-Paragraph 1: Highlight the candidate's education, interests, and academic achievements from the resume [Resume_Text].
-Paragraph 2: Mention previous job experiences, projects, and the industry they worked in from the resume [Resume_Text].
-Paragraph 3: Share future career goals and plans (aligned with [Target_Role] and [Job_Description_Text]).
+From the [Target_Role], [Resume_Text], and [Job_Description_Text], create an "ABOUT" section for a LinkedIn profile that:
+- Is written in 3 short paragraphs:
+  1. Intro: Years of experience, specialization, and core value proposition.
+  2. Body: Role-relevant skills and measurable achievements (quantified results) from [Resume_Text] and [Job_Description_Text].
+  3. Closing: Career vision, leadership/innovation focus, and role alignment.
+- Reads like a narrative, not a bullet list.
+- Is corporate, formal, keyword-rich, and recruiter-friendly.
+- Avoids casual phrases and personal anecdotes unrelated to the role.
+- Naturally integrates at least 6–8 high-value keywords from [Job_Description_Text] for LinkedIn search optimization.
 
-Act as a pro expert LinkedIn Branding Consultant and a master of professional English, using advanced phrasal verbs and industry-specific keywords.
+Logic:
+1. Identify total years of experience and areas of specialization from [Resume_Text]. 
+2. Extract most impactful achievements, tools, and technologies relevant to [Target_Role].
+3. Pull 6–8 high-value keywords from [Job_Description_Text] that recruiters are likely to search.
+4. Structure into 3 professional paragraphs with a clear narrative flow. 
+5. Ensure it is under 2,000 characters for LinkedIn's About section limit.
 
-CRITICAL INSTRUCTION: Do NOT repeat the exact sentences or copy the phrasing from the resume [Resume_Text]. Rephrase all accomplishments, education, and experiences to be completely different from the source text, presenting them with elevated vocabulary and smooth transitions.
-STRICTLY FORBIDDEN: Do NOT mention the candidate's name or any other personal names from the resume anywhere in the text.
+CRITICAL INSTRUCTIONS:
+- STRICTLY FORBIDDEN: Do NOT include any personal names (including the candidate's own name, managers, colleagues, clients, or references) from the resume in any generated text.
+- Do NOT repeat the exact sentences or copy the phrasing from the resume [Resume_Text]. Rephrase all accomplishments, education, and experiences to be completely different from the source text, presenting them with elevated vocabulary and smooth transitions.
+- Do not fabricate or invent achievements or credentials. Use ONLY facts/information from the resume [Resume_Text].
 
 Data:
 [Target_Role]: {{TARGET_ROLE}}
@@ -49,7 +66,6 @@ Data:
 [Job_Description_Text]: {{JOB_DESC}}
 
 Output:
-Return ONLY the 3 paragraphs of the About section (no labels, no headings, no quotes).
 `,
 
   experience: `
@@ -64,7 +80,9 @@ Improve the LinkedIn Experience section. For each role:
 - Present the results/achievements in bullet points (starting with "- ").
 
 Act as an expert corporate resume writer.
-CRITICAL INSTRUCTION: STRICTLY do NOT repeat the exact same sentences, descriptions, or phrasing from the resume [Resume_Text]. Rewrite, elevate, and reformulate the content entirely to be different from the source text while preserving the core factual details and metrics. Transform simple task descriptions into high-impact achievements using active phrasal verbs and professional terminology.
+CRITICAL INSTRUCTION: STRICTLY do NOT repeat the exact same sentences, descriptions, or phrasing from the resume [Resume_Text], and do not repeat the same words or sentences across the experience section. Rewrite, elevate, and reformulate the content entirely to be different from the source text while preserving the core factual details and metrics. Transform simple task descriptions into high-impact achievements using active phrasal verbs and professional terminology.
+- Word strength, vocabulary impact, and phrasing structure must be consistent and equally strong for every bullet point.
+- Every single sentence must be highly meaningful, delivering specific value and impact without generic fluff or unnecessary repetition.
 STRICTLY FORBIDDEN: Do NOT include any personal names (including the candidate's name, managers, coworkers, or references) from the resume in any experience entry.
 
 Output Template:
