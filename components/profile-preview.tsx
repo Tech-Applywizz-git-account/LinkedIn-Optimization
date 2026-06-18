@@ -7,9 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Edit, MapPin, Building, GraduationCap, Award, Code, Download, Share, Eye } from "lucide-react"
-import type { OptimizationResult } from "@/lib/optimization-engine"
 import { ExportDialog } from "@/components/export-dialog"
-import type { ExportData } from "@/lib/export-utils"
+import type { ExportData, OptimizationResult } from "@/lib/export-utils"
+import { copyToClipboard } from "@/lib/utils"
 
 interface ProfilePreviewProps {
   targetRole: string
@@ -64,10 +64,9 @@ export function ProfilePreview({
         console.log("Share cancelled or failed")
       }
     } else {
-      // Fallback: copy URL to clipboard
+      // Fallback: copy URL to clipboard using robust helper
       try {
-        await navigator.clipboard.writeText(window.location.href)
-        // You could show a toast here
+        await copyToClipboard(window.location.href)
       } catch (error) {
         console.log("Failed to copy URL")
       }
@@ -114,7 +113,7 @@ export function ProfilePreview({
               />
               {result.keywords.length > 0 && (
                 <div className="flex flex-wrap gap-1 pt-2 border-t">
-                  {result.keywords.slice(0, 8).map((keyword, index) => (
+                  {result.keywords.slice(0, 8).map((keyword: string, index: number) => (
                     <Badge key={index} variant="outline" className="text-xs">
                       {keyword}
                     </Badge>

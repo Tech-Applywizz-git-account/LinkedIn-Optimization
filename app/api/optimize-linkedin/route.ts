@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+export const dynamic = "force-dynamic";
+
 // Domain keyword mapping
 const DOMAIN_KEYWORDS = {
   AML: [
@@ -144,57 +146,40 @@ function extractExperience(resumeText: string): number {
 function generateHeadline(resumeText: string, targetRole: string, keywords: string[]): string {
   const experience = extractExperience(resumeText)
   const expText = experience === 1 ? "1+ Year" : `${experience}+ Years`
-  const topKeywords = keywords.slice(0, 3).join(" | ")
+  const topKeywords = keywords.slice(0, 3).join(", ")
 
-  return `${targetRole} | ${expText} Experience | ${topKeywords} | Driving Results & Innovation`
+  return `${targetRole} | Specialized in ${topKeywords} | ${expText} Experience | Delivering Strategic Value`
 }
 
 function generateAbout(resumeText: string, targetRole: string, keywords: string[]): string {
   const experience = extractExperience(resumeText)
   const expText = experience === 1 ? "1+ year" : `${experience}+ years`
+  const topKeywords = keywords.slice(0, 4).join(", ")
 
-  return `🚀 ${targetRole} with ${expText} of experience delivering exceptional results
+  return `Paragraph 1 (Education & Achievements):
+Holding a strong academic foundation in the field of ${targetRole}, I have built my expertise around core areas like ${topKeywords}. I am passionate about solving complex industry problems and have achieved notable academic success in projects related to my domain.
 
-💼 EXPERTISE:
-• ${keywords.slice(0, 4).join("\n• ")}
+Paragraph 2 (Previous Experience & Projects):
+Over my career, including ${expText} of professional experience, I have contributed to key projects and successfully automated workflows. My work across different projects has focused on enhancing efficiency, optimizing database operations, and implementing robust frontend/backend architectures.
 
-🎯 WHAT I BRING:
-• Proven track record of driving business growth and operational efficiency
-• Strong analytical and problem-solving capabilities
-• Collaborative leadership style with excellent communication skills
-• Passion for continuous learning and staying ahead of industry trends
-
-📈 IMPACT:
-• Successfully delivered multiple high-impact projects
-• Improved processes and systems for enhanced productivity
-• Built strong relationships with stakeholders and team members
-• Consistently exceeded performance targets and expectations
-
-🔍 Currently seeking opportunities to leverage my expertise in ${targetRole.toLowerCase()} roles where I can contribute to organizational success and continue growing professionally.
-
-Let's connect and explore how I can add value to your team! 🤝`
+Paragraph 3 (Future Goals):
+Looking ahead, my goal is to leverage my technical expertise in ${targetRole.toLowerCase()} roles. I aim to drive innovation, work with high-performing teams, and contribute to scaling operations at a forward-thinking organization.`
 }
 
 function generateExperience(resumeText: string, targetRole: string, keywords: string[]): string {
-  return `📋 OPTIMIZED EXPERIENCE DESCRIPTIONS:
+  return `[Job Title] at [Company Name]
+[Location] | [Duration]
+Concise, impact-focused description of the role, utilizing keywords like ${keywords.slice(0, 4).join(", ")}. Designed and delivered complex systems while improving performance.
+- Engineered a scalable solution that reduced processing latency by 30% using ${keywords[0] || "SQL"}.
+- Collaborated with cross-functional teams to integrate APIs, improving integration efficiency.
+- Led data migration project resulting in zero downtime and improved data integrity.
 
-🔹 Use action verbs: Led, Developed, Implemented, Managed, Achieved
-🔹 Include quantifiable results: "Increased efficiency by 25%", "Managed team of 10+"
-🔹 Incorporate relevant keywords: ${keywords.slice(0, 5).join(", ")}
-
-💡 EXAMPLE FORMAT:
-[Job Title] | [Company Name] | [Duration]
-• Developed and implemented [specific solution] resulting in [quantifiable outcome]
-• Led cross-functional team of [number] to deliver [specific project/initiative]
-• Utilized ${keywords[0]} and ${keywords[1]} to optimize [specific process/system]
-• Achieved [specific metric] through strategic [relevant skill/approach]
-
-🎯 KEY TIPS:
-• Start each bullet with a strong action verb
-• Focus on achievements, not just responsibilities
-• Use numbers and percentages wherever possible
-• Align descriptions with your target role: ${targetRole}
-• Include 3-5 bullet points per role for optimal impact`
+[Previous Job Title] at [Previous Company Name]
+[Location] | [Duration]
+Impactful role description focusing on development, testing, and optimization of backend services and user interfaces.
+- Implemented robust features that increased active user engagement.
+- Resolved key system bottlenecks using ${keywords[1] || "Python"}, optimizing overall response times.
+- Documented testing procedures, reducing onboarding time for new developers.`
 }
 
 function generateProjects(resumeText: string, targetRole: string, keywords: string[]): string {
@@ -264,46 +249,23 @@ function generateEducation(resumeText: string, targetRole: string, keywords: str
 }
 
 function generateSkills(resumeText: string, targetRole: string, keywords: string[]): string {
-  return `⚡ STRATEGIC SKILLS OPTIMIZATION:
+  const suggestedSkills = [
+    ...keywords.slice(0, 10),
+    "Project Management",
+    "Data Analysis",
+    "SQL",
+    "Python",
+    "API Integration",
+    "Software Development",
+    "Git",
+    "Agile Methodologies",
+    "Cloud Computing",
+    "Problem Solving"
+  ].slice(0, 20);
 
-🎯 PRIMARY SKILLS (Top 10 for ${targetRole}):
-${keywords
-  .slice(0, 10)
-  .map((skill) => `• ${skill}`)
-  .join("\n")}
+  return `Skills: ${suggestedSkills.join(", ")}
 
-🔧 TECHNICAL PROFICIENCIES:
-• Programming Languages: Python, SQL, JavaScript, R
-• Tools & Platforms: Excel, Tableau, Power BI, Salesforce
-• Methodologies: Agile, Scrum, Lean Six Sigma
-• Databases: MySQL, PostgreSQL, MongoDB
-
-💼 PROFESSIONAL COMPETENCIES:
-• Project Management & Leadership
-• Data Analysis & Visualization
-• Strategic Planning & Execution
-• Cross-functional Collaboration
-• Process Improvement & Optimization
-
-🌟 SOFT SKILLS:
-• Communication & Presentation
-• Problem-solving & Critical Thinking
-• Team Leadership & Mentoring
-• Adaptability & Continuous Learning
-• Client Relationship Management
-
-💡 LINKEDIN SKILLS STRATEGY:
-• Add top 50 skills relevant to ${targetRole}
-• Get endorsements from colleagues and managers
-• Take LinkedIn skill assessments for credibility
-• Regularly update based on industry trends
-• Prioritize skills mentioned in target job descriptions
-
-🚀 EMERGING SKILLS TO CONSIDER:
-• Artificial Intelligence & Machine Learning
-• Cloud Computing (AWS, Azure, GCP)
-• Digital Transformation
-• Automation & Process Optimization`
+Software & Tools: Excel, VS Code, Postman, Tableau, Power BI, Jira, GitHub`
 }
 
 function generateCertifications(resumeText: string, targetRole: string, keywords: string[]): string {

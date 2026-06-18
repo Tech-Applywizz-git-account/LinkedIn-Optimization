@@ -54,6 +54,6 @@ export class VariationGate {
     }
 
     const pick = decideAcceptance(attempts, previous, this.thresholds);
-    return { content: pick.value, accepted: pick.accepted, attempts: pick.attempts };
+    return { content: pick.content, accepted: pick.accepted, attempts: attempts.length };
   }
 }

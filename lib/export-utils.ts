@@ -1,3 +1,5 @@
+import { copyToClipboard } from "./utils"
+
 // lib/export-utils.ts
 
 /* ------------------------------------------------------------------
@@ -207,13 +209,7 @@ export class LinkedInExporter {
   }
 
   static async copyToClipboard(content: string): Promise<boolean> {
-    try {
-      await navigator.clipboard.writeText(content);
-      return true;
-    } catch (error) {
-      console.error("Failed to copy to clipboard:", error);
-      return false;
-    }
+    return copyToClipboard(content);
   }
 
   static generateSectionExport(sectionId: string, result: OptimizationResult, targetRole: string): string {

@@ -14,6 +14,7 @@ import {
   type KeywordMapping,
   keywordMappings,
 } from "@/lib/keyword-mapping"
+import { copyToClipboard } from "@/lib/utils"
 
 export function KeywordMapper() {
   const [targetRole, setTargetRole] = useState("")
@@ -100,7 +101,7 @@ export function KeywordMapper() {
 
   const copyKeywords = async () => {
     if (keywords.length > 0) {
-      await navigator.clipboard.writeText(keywords.join(", "))
+      await copyToClipboard(keywords.join(", "))
       setCopiedKeywords(true)
       setTimeout(() => setCopiedKeywords(false), 2000)
     }
