@@ -764,31 +764,55 @@ function sectionPrompt(section: string, _subIndex?: number, _hasRoleContext?: bo
 Write a LinkedIn Headline that effectively communicates the candidate's qualifications, work experience, and unique value, optimized to the highest standard by a LinkedIn branding expert.
 
 Format:
-[Keyword 1] | [Keyword 2] | [Keyword 3] | ... | [Sharing/Doing Phrase]
+[Seniority Level] [Keyword 1] | [Keyword 2] | [Keyword 3] | ... | [Sharing/Doing Phrase]
 
 Instructions:
+- Conditionally determine the candidate's experience/seniority level based on [Exact_Years_From_Resume] or [Resume_Text], and prefix the very first keyword in the headline with it:
+  - Less than 2 years of experience: Prefix with "Junior" or "Associate" (e.g., "Junior Software Engineer", "Associate Data Analyst").
+  - 2 to 5 years of experience: Prefix with "Mid-Level" (e.g., "Mid-Level MERN Developer").
+  - 5 to 8 years of experience: Prefix with "Senior" (e.g., "Senior Backend Engineer").
+  - 8+ years of experience: Prefix with "Senior", "Lead", or "Principal" depending on their exact roles.
 - Extract and highlight the most essential keywords of 1, 2, or 3 words each from the resume [Resume_Text] (such as job titles, core specializations, tools, and technical skills).
 - You MUST add all essential keywords that are critical for industry SEO and recruiter search optimization based on the candidate's background.
 - Separate each keyword or phrase strictly using a vertical line ("|").
 - Every individual keyword or phrase must strictly be short (1 to 3 words maximum).
 - End the headline with a custom, high-impact phrase starting with "Sharing..." or similar, describing what the candidate shares, builds, or delivers (e.g., "Sharing Dev Insights, Roadmaps & Coding Tips" or "Sharing Tech Solutions, Best Practices & System Designs").
 - Do not repeat or copy sentences verbatim from the resume. Use sophisticated, high-impact corporate terminology.
+- STRICTLY FORBIDDEN: Do NOT include the candidate's name or any other personal names in the headline.
 - Format: Plain text only, under 220 characters. No markdown formatting (no asterisks, quotes, or HTML tags). Only output the headline itself.`;
 
     case "about":
-      return `Task:
-Write a LinkedIn About Section using the following format:
-Paragraph 1: Highlight the candidate's education, interests, and academic achievements from the resume [Resume_Text].
-Paragraph 2: Mention previous job experiences, projects, and the industry they worked in from the resume [Resume_Text].
-Paragraph 3: Share future career goals and plans (aligned with [Target_Role] and [Job_Description_Text]).
+      return `You are a LinkedIn optimization expert with 15+ years of experience in corporate career branding.
+You work for ApplyWizz, a company that optimizes LinkedIn profiles to rank in the top 1% of recruiter searches.
 
-Act as a pro expert LinkedIn Branding Consultant and a master of professional English, using advanced phrasal verbs and industry-specific keywords. 
+Task:
+From the [Target_Role], [Resume_Text], and [Job_Description_Text], create an "ABOUT" section for a LinkedIn profile that:
+- Is written in 3 short paragraphs:
+  1. Intro: Years of experience, specialization, and core value proposition.
+  2. Body: Role-relevant skills and measurable achievements (quantified results) from [Resume_Text] and [Job_Description_Text].
+  3. Closing: Career vision, leadership/innovation focus, and role alignment.
+- Reads like a narrative, not a bullet list.
+- Is corporate, formal, keyword-rich, and recruiter-friendly.
+- Avoids casual phrases and personal anecdotes unrelated to the role.
+- Naturally integrates at least 6–8 high-value keywords from [Job_Description_Text] for LinkedIn search optimization.
 
-CRITICAL INSTRUCTION: Do NOT repeat the exact sentences or copy the phrasing from the resume [Resume_Text]. Rephrase all accomplishments, education, and experiences to be completely different from the source text, presenting them with elevated vocabulary and smooth transitions.
+Logic:
+1. Identify total years of experience and areas of specialization from [Resume_Text]. 
+2. Extract most impactful achievements, tools, and technologies relevant to [Target_Role].
+3. Pull 6–8 high-value keywords from [Job_Description_Text] that recruiters are likely to search.
+4. Structure into 3 professional paragraphs with a clear narrative flow. 
+5. Ensure it is under 2,000 characters for LinkedIn's About section limit.
 
-### Constraints:
-- Use ONLY facts/information from the resume [Resume_Text]. Do not fabricate or invent achievements or credentials.
-- Format: Plain text only, exactly 3 paragraphs. No markdown styling (e.g., no bolding, no italics, no bullet points). Keep it narrative.`;
+CRITICAL INSTRUCTIONS:
+- STRICTLY FORBIDDEN: Do NOT include any personal names (including the candidate's own name, managers, colleagues, clients, or references) from the resume in any generated text.
+- Do NOT repeat the exact sentences or copy the phrasing from the resume [Resume_Text]. Rephrase all accomplishments, education, and experiences to be completely different from the source text, presenting them with elevated vocabulary and smooth transitions.
+- Do not fabricate or invent achievements or credentials. Use ONLY facts/information from the resume [Resume_Text].
+
+Example Output (DO NOT copy the content below, use it as a reference for formatting and narrative style only):
+ABOUT
+With over 4 years of experience as a Full Stack Java Developer, I specialize in designing and delivering scalable, cloud‑native applications across the automotive and e‑commerce domains. My expertise spans backend development with Java, Spring Boot, Hibernate, and Microservices architecture, alongside building responsive, accessible UIs with React.js, HTML5, CSS3, Bootstrap, and JavaScript. I bring strong DevOps capabilities — AWS (EC2, Lambda, S3, RDS), Docker, Jenkins, GitHub Actions, Terraform, and CI/CD automation ensuring high‑availability systems that deploy faster and perform reliably.
+At General Motors, I engineered microservices that improved connected vehicle data processing by 45%, optimized infotainment UIs to boost user engagement by 28%, and automated build/release pipelines to reduce deployment lead time by 40%. At Augur Talent Care, I developed a modular e‑commerce backend achieving 99.9% uptime, implemented JWT‑based authentication blocking 500+ unauthorized access attempts, and integrated Stripe/PayPal gateways to drive a 23% increase in conversion rates. My work is backed by strong testing and security practices, including JUnit, Mockito, REST Assured, Selenium, Postman, and real‑time monitoring with ELK Stack and CloudWatch.
+Holding a Master’s in Information Technology from the University of Missouri–Kansas City and certifications in Java Fundamentals (Oracle) and Python (Cisco), I aim to progress into a Senior Full Stack Developer or Solutions Architect role. My goal is to architect high‑performance systems, mentor engineering teams, and drive innovation in cloud‑native application development, ensuring every solution I build is robust, scalable, and impactful.`;
 
     case "experience":
       return `Task:
@@ -799,7 +823,9 @@ Improve the LinkedIn Experience section. For each role (or the specific role in 
 - Present the results and achievements in bullet points (starting with "- " followed by space).
 
 Act as an expert corporate resume writer. 
-CRITICAL INSTRUCTION: STRICTLY do NOT repeat the exact same sentences, descriptions, or phrasing from the resume [Resume_Text]. Rewrite, elevate, and reformulate the content entirely to be different from the source text while preserving the core factual details and metrics. Transform simple task descriptions into high-impact achievements using active phrasal verbs and professional terminology.
+CRITICAL INSTRUCTION: STRICTLY do NOT repeat the exact same sentences, descriptions, or phrasing from the resume [Resume_Text], and do not repeat the same words or sentences across the experience section. Rewrite, elevate, and reformulate the content entirely to be different from the source text while preserving the core factual details and metrics. Transform simple task descriptions into high-impact achievements using active phrasal verbs and professional terminology.
+- Word strength, vocabulary impact, and phrasing structure must be consistent and equally strong for every bullet point.
+- Every single sentence must be highly meaningful, delivering specific value and impact without generic fluff or unnecessary repetition.
 
 ### Constraints:
 - Use ONLY facts and responsibilities present in the resume [Resume_Text] or [ROLE CONTEXT]. Do not invent results, metrics, or duties.
@@ -823,7 +849,9 @@ Improve the LinkedIn Internship section. Write ONE LinkedIn internship entry usi
 - Present results/achievements in bullet points (starting with "- " followed by space).
 
 Act as a master LinkedIn writer.
-CRITICAL INSTRUCTION: STRICTLY do NOT repeat the exact same sentences or phrasing from the resume. Rewrite and elevate the content entirely to be different from the source text, expressing all internship details with sophisticated corporate terminology.
+CRITICAL INSTRUCTION: STRICTLY do NOT repeat the exact same sentences or phrasing from the resume, and do not repeat the same words or sentences across the internship section. Rewrite and elevate the content entirely to be different from the source text, expressing all internship details with sophisticated corporate terminology.
+- Word strength, vocabulary impact, and phrasing structure must be consistent and equally strong for every bullet point.
+- Every single sentence must be highly meaningful, delivering specific value and impact without generic fluff or unnecessary repetition.
 
 ### Constraints:
 - Use ONLY facts from [Resume_Text] or [ROLE CONTEXT].
