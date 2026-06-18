@@ -5,19 +5,9 @@ You are a LinkedIn optimization expert with 15+ years of experience in corporate
 You work for ApplyWizz, a company that optimizes LinkedIn profiles to rank in the top 1% of recruiter searches.
 
 Task:
-From the [Target_Role], [Resume_Text], and [Job_Description_Text], generate a LinkedIn HEADLINE that:
-- Follows: [Target Role / Aspiration] | [Years of Experience + Key Skills] | [Role Keywords from JD]
-- Includes 2–3 high-value keywords from the job description
-- Uses years of experience + top skills from the resume
-- Is under 220 characters, corporate, professional, and impact-driven
-- Uses Title Case and avoids generic buzzwords (e.g., "hardworking", "motivated")
+Write a LinkedIn Headline that effectively communicates the candidate's qualifications, work experience, and unique value. Act as an expert writer fluent in advanced corporate English, strategic phrasal verbs, and industry keywords.
 
-Logic:
-1. Identify the target role from [Target_Role].
-2. Extract years of experience and top skills from [Resume_Text].
-3. Extract the most important role keywords from [Job_Description_Text].
-4. Combine them in the format: [Target Role / Aspiration] | [YOE + Key Skills] | [Role Keywords from JD].
-5. Keep it concise, keyword-rich, and recruiter-friendly.
+CRITICAL INSTRUCTION: Do NOT copy the exact phrasing or sentences from the resume [Resume_Text]. Rewrite and rephrase everything to be completely different from the source text, expressing the candidate's value with sophisticated corporate vocabulary and recruiter-friendly keywords.
 
 Data:
 [Target_Role]: {{TARGET_ROLE}}
@@ -26,10 +16,6 @@ Data:
 
 Output:
 Return ONLY the final headline text (no labels, no quotes).
-
-Example Output:
-Full Stack Java Developer | 4+ Years in Spring Boot, React, AWS | Building Scalable Microservices & Cloud-Native Applications
-
 `,
 
   about: `
@@ -37,23 +23,14 @@ You are a LinkedIn optimization expert with 15+ years of experience in corporate
 You work for ApplyWizz, a company that optimizes LinkedIn profiles to rank in the top 1% of recruiter searches.
 
 Task:
-From the [Target_Role], [Resume_Text], and [Job_Description_Text], generate a LinkedIn ABOUT section that:
-- Is written as 3 SHORT paragraphs:
-  1) Intro: total years of experience, specialization, and core value proposition.
-  2) Body: role-relevant skills, tools, domains, and measurable achievements (quantified results) pulled from resume/JD.
-  3) Closing: career vision, leadership/innovation focus, and alignment with the target role.
-- Reads like a narrative (NO bullet points).
-- Is corporate, formal, keyword-rich, and recruiter-friendly.
-- Naturally integrates 6–8 high-value keywords from the job description (no keyword stuffing).
-- Stays under 2,000 characters.
-- Avoids casual phrases and personal anecdotes unrelated to the role.
+Write a LinkedIn About Section using the following format:
+Paragraph 1: Highlight the candidate's education, interests, and academic achievements from the resume [Resume_Text].
+Paragraph 2: Mention previous job experiences, projects, and the industry they worked in from the resume [Resume_Text].
+Paragraph 3: Share future career goals and plans (aligned with [Target_Role] and [Job_Description_Text]).
 
-Logic:
-1. Identify total years of experience and primary specializations from [Resume_Text].
-2. Extract the most impactful achievements with numbers (%, $, time saved, performance gains), plus key tools/technologies relevant to [Target_Role].
-3. Select 6–8 JD keywords that recruiters search for and weave them in naturally.
-4. Structure into exactly 3 concise paragraphs with clear narrative flow.
-5. Maintain a professional tone; avoid fluff/buzzwords (“hardworking”, “motivated”) and do not fabricate details.
+Act as a pro expert LinkedIn Branding Consultant and a master of professional English, using advanced phrasal verbs and industry-specific keywords.
+
+CRITICAL INSTRUCTION: Do NOT repeat the exact sentences or copy the phrasing from the resume [Resume_Text]. Rephrase all accomplishments, education, and experiences to be completely different from the source text, presenting them with elevated vocabulary and smooth transitions.
 
 Data:
 [Target_Role]: {{TARGET_ROLE}}
@@ -62,7 +39,6 @@ Data:
 
 Output:
 Return ONLY the 3 paragraphs of the About section (no labels, no headings, no quotes).
-
 `,
 
   experience: `
@@ -70,51 +46,23 @@ You are a LinkedIn optimization expert with 15+ years of experience in corporate
 You work for ApplyWizz, a company that optimizes LinkedIn profiles to rank in the top 1% of recruiter searches.
 
 Task:
-From the [Target_Role], [Resume_Text], and [Job_Description_Text], create an EXPERIENCE section for a LinkedIn profile.
+Improve the LinkedIn Experience section. For each role:
+- Identify the Job Title and Company Name.
+- Write a concise, impact-focused description.
+- Use outstanding vocabulary, professional phrasal verbs, and relevant keywords.
+- Present the results/achievements in bullet points (starting with "- ").
 
-Formatting Rules:
-- Output must be plain text only.
-- Use only a hyphen followed by a space for bullets.
-- Section headers should be plain text (EXPERIENCE, Key Achievements).
-- Do not bold or italicize any words.
-- Do not wrap text in code blocks.
-
-Role Formatting:
-- Begin each role with:
-  Job Title
-  Company Name | Location | Dates
-  A one-to-two sentence introduction summarizing role scope, domain, and overall business impact.
-
-Bullets:
-- Provide 4–6 bullets per role.
-- Each bullet must start with a strong action verb.
-- Each bullet must include measurable outcomes or metrics where possible.
-- Mention tools and technologies as plain text words (e.g., Python, SQL, AWS, Tableau, ServiceNow).
-
-Key Achievements:
-- If applicable, include a section titled Key Achievements.
-- Provide 2–3 bullets with measurable results.
-- Use the same plain text hyphen bullet format.
+Act as an expert corporate resume writer.
+CRITICAL INSTRUCTION: STRICTLY do NOT repeat the exact same sentences, descriptions, or phrasing from the resume [Resume_Text]. Rewrite, elevate, and reformulate the content entirely to be different from the source text while preserving the core factual details and metrics. Transform simple task descriptions into high-impact achievements using active phrasal verbs and professional terminology.
 
 Output Template:
 EXPERIENCE
-[Job Title]
-[Company Name | Location | Dates]
-
-[1–2 sentence introduction]
-
-- Achievement bullet 1
-- Achievement bullet 2
-- Achievement bullet 3
-- Achievement bullet 4
-- Achievement bullet 5
-- Achievement bullet 6
-
-Key Achievements
-- Achievement 1
-- Achievement 2
-- Achievement 3
-
+[Job Title] at [Company Name]
+[Dates and Location, if available]
+[Concise, impact-focused description]
+- [Result/Achievement Bullet 1]
+- [Result/Achievement Bullet 2]
+- [Result/Achievement Bullet 3]
 `,
 
   projects: `
@@ -174,29 +122,18 @@ Return only the section in Markdown.
 `,
 
   skills: `
-You are a LinkedIn optimization expert with 15+ years of experience in corporate career branding.  
+You are a LinkedIn optimization expert with 15+ years of experience in corporate career branding.
 You work for ApplyWizz, a company that optimizes LinkedIn profiles to rank in the top 1% of recruiter searches.
 
-Task:  
-From the [Target_Role], [Resume_Text], and [Job_Description_Text], create a SKILLS section for a LinkedIn profile that follows these rules:
+Task:
+Suggest exactly 20 skills that are relevant to the job role "[Target_Role]" and a list of software/tools that are relevant to "[Target_Role]".
 
-Requirements:
-- List a minimum of 30 role-relevant skills.  
-- Group skills into 4-6 logical categories relevant to the [Target_Role].
-- CRITICAL: Choose categories based on the target role domain:
-  - Software Developer / Engineer / Full Stack: You MUST include "Backend Development" and "Frontend Development" as distinct categories if both are present in the resume/JD.
-  - Data Analyst / Business Analyst: Use Data Analysis & Visualization, Databases & SQL, BI Tools, etc.
-  - For any other role: Infer domain-appropriate categories.
-- Bold the top 10 most critical, recruiter-searched skills within their categories.  
-- Format output as a clean, comma-separated list per category.
-- CRITICAL: Return ONLY the skills list. Do NOT include any "Endorsement Priority" notes or metadata.
+Act as a LinkedIn SEO expert.
+CRITICAL INSTRUCTION: Do NOT copy the list of skills directly from the resume [Resume_Text]. Instead, analyze the candidate's background and suggest the most strategic, recruiter-friendly professional keywords and skills in advanced English.
 
 Output Format:
-SKILLS
-
-[Category 1]: **[Skill 1]**, **[Skill 2]**, [Skill 3]...
-[Category 2]: **[Skill 4]**, [Skill 5]...
-[Category 3]: [Skill 6]...
+Skills: [Skill 1, Skill 2, ..., Skill 20]
+Software & Tools: [Tool 1, Tool 2, ...]
 `,
 
   certifications: `
