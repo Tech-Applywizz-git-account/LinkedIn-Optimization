@@ -769,8 +769,9 @@ Format:
 Instructions:
 - Conditionally determine the candidate's experience/seniority level based on [Exact_Years_From_Resume] or [Resume_Text], and prefix the very first keyword in the headline with it:
   - Less than 2 years of experience: Prefix with "Junior" or "Associate" (e.g., "Junior Software Engineer", "Associate Data Analyst").
-  - 2 to 5 years of experience: Prefix with "Mid-Level" (e.g., "Mid-Level MERN Developer").
-  - 5 to 8 years of experience: Prefix with "Senior" (e.g., "Senior Backend Engineer").
+  - 2 to 5 years of experience: Do NOT add any seniority prefix. Use the role name directly (e.g., "MERN Developer", "Data Analyst").
+  - IMPORTANT: If the resume states "3+ years", "4+ years", or any value between 2 and 5, treat it strictly as the 2–5 years range. Do NOT use "Senior". Use the role name only.
+  - 5 to 8 years of experience: Prefix with "Senior" ONLY when experience is clearly 5 years or more (e.g., "Senior Backend Engineer").
   - 8+ years of experience: Prefix with "Senior", "Lead", or "Principal" depending on their exact roles.
 - Extract and highlight the most essential keywords of 1, 2, or 3 words each from the resume [Resume_Text] (such as job titles, core specializations, tools, and technical skills).
 - You MUST add all essential keywords that are critical for industry SEO and recruiter search optimization based on the candidate's background.
@@ -821,6 +822,11 @@ Improve the LinkedIn Experience section. For each role (or the specific role in 
 - Write a concise, impact-focused description.
 - Use outstanding vocabulary, professional phrasal verbs, and relevant keywords.
 - Present the results and achievements in bullet points (starting with "- " followed by space).
+
+STRICTLY FORBIDDEN — EXCLUSIONS (DO NOT INCLUDE ANY OF THESE):
+- Do NOT include anything from the Projects section of the resume (e.g., personal projects, academic projects, side projects, capstone projects, portfolio projects). Projects belong in the dedicated Projects section.
+- Do NOT include anything from the Education, Certifications, or Skills sections.
+- ONLY include entries that are actual paid work experience or full-time/part-time employment roles at a real company.
 
 Act as an expert corporate resume writer. 
 CRITICAL INSTRUCTION: STRICTLY do NOT repeat the exact same sentences, descriptions, or phrasing from the resume [Resume_Text], and do not repeat the same words or sentences across the experience section. Rewrite, elevate, and reformulate the content entirely to be different from the source text while preserving the core factual details and metrics. Transform simple task descriptions into high-impact achievements using active phrasal verbs and professional terminology.
