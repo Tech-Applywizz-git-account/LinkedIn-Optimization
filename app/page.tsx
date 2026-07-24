@@ -5,8 +5,6 @@ import ResumeUpload from "@/components/resume-upload";
 import MinimalStepWrapper from "@/components/MinimalStepWrapper";
 import type { ParsedResume } from "@/lib/resumeParser";
 import { sanitizeLLMText } from "@/lib/sanitize";
-import { createClient } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
 
 export default function Page() {
   const [resumeText, setResumeText] = useState<string | null>(null);
@@ -16,18 +14,14 @@ export default function Page() {
   const [jobDescription, setJobDescription] = useState("");
   const [industry, setIndustry] = useState("");
 
-  const router = useRouter();
-  const supabase = createClient();
-
-  async function handleSignOut() {
-    await supabase.auth.signOut();
-    router.push("/auth");
-    router.refresh();
-  }
-
   function handleParsed(data: { text: string; parsed: ParsedResume }) {
     setResumeText(sanitizeLLMText(data.text));
     setParsed(data.parsed || null);
+  }
+
+  async function handleSignOut() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/auth";
   }
 
   return (
@@ -39,7 +33,6 @@ export default function Page() {
         </div>
         <button
           onClick={handleSignOut}
-          suppressHydrationWarning
           className="px-4 py-1.5 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition"
         >
           Sign Out

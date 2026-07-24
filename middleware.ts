@@ -1,55 +1,35 @@
-// middleware.ts
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { jwtVerify } from "jose";
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
-  const { data: { user } } = await supabase.auth.getUser();
-
   const { pathname } = request.nextUrl;
+  
+  // Allow public paths
+  if (pathname.startsWith("/auth") || pathname.startsWith("/api/auth")) {
+    return NextResponse.next();
+  }
 
-  // Allow public paths: /auth and its sub-routes
-  const isAuthRoute = pathname.startsWith("/auth");
-  const isApiRoute = pathname.startsWith("/api");
+  const sessionToken = request.cookies.get("auth_session")?.value;
 
-  if (!user && !isAuthRoute && !isApiRoute) {
-    // Redirect unauthenticated users to /auth
+  if (!sessionToken) {
+    return NextResponse.redirect(new URL("/auth", request.url));
+  }
+
+  try {
+    const secretStr = process.env.AUTH_SECRET;
+    if (!secretStr) throw new Error("Missing secret");
+    const secret = new TextEncoder().encode(secretStr);
+    await jwtVerify(sessionToken, secret);
+    return NextResponse.next();
+  } catch (error) {
+    // Invalid or expired token
     const url = request.nextUrl.clone();
     url.pathname = "/auth";
-    return NextResponse.redirect(url);
+    const response = NextResponse.redirect(url);
+    response.cookies.delete("auth_session");
+    return response;
   }
-
-  if (user && pathname === "/auth") {
-    // Redirect authenticated users away from /auth to homepage
-    const url = request.nextUrl.clone();
-    url.pathname = "/";
-    return NextResponse.redirect(url);
-  }
-
-  return supabaseResponse;
 }
 
 export const config = {
