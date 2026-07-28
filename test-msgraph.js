@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
+
 // Basic dotenv parser for this script
 const envPath = path.join(__dirname, '.env.local');
 const envFile = fs.readFileSync(envPath, 'utf-8');
