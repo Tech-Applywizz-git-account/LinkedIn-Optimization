@@ -528,7 +528,7 @@
 //    via instruction-only, resume sanitization, company canonicalization, and strict plain-text outputs.
 
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
+import { AzureOpenAI } from "openai";
 import {
   pickBySection,
   pickAuto,
@@ -542,7 +542,12 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // ---------- OpenAI client ----------
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "" });
+const openai = new AzureOpenAI({
+  endpoint: process.env.AZURE_OPENAI_ENDPOINT,
+  apiKey: process.env.AZURE_OPENAI_API_KEY,
+  apiVersion: process.env.AZURE_OPENAI_API_VERSION,
+  deployment: process.env.AZURE_OPENAI_DEPLOYMENT,
+});
 
 // ---------- System prompt ----------
 const SYSTEM_PROMPT =
@@ -1459,9 +1464,9 @@ async function callOpenAIJSON(
 
 export async function POST(req: Request) {
   try {
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.AZURE_OPENAI_API_KEY) {
       return NextResponse.json(
-        { error: "Missing OPENAI_API_KEY", detail: "Set OPENAI_API_KEY in your environment." },
+        { error: "Missing AZURE_OPENAI_API_KEY", detail: "Set AZURE_OPENAI_API_KEY in your environment." },
         { status: 500 }
       );
     }
