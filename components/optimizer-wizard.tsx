@@ -476,6 +476,7 @@ export default function OptimizerWizard({
           industry: industry || "",
           generatedAt: new Date().toISOString(),
           keywords,
+          personName: parsed?.name || "",
         },
         sections: { ...outputs },
         resumeText,
