@@ -542,11 +542,13 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // ---------- OpenAI client ----------
+// Provide fallback dummy values so the Next.js build doesn't crash during static data collection
+// when environment variables are not present.
 const openai = new AzureOpenAI({
-  endpoint: process.env.AZURE_OPENAI_ENDPOINT,
-  apiKey: process.env.AZURE_OPENAI_API_KEY,
-  apiVersion: process.env.AZURE_OPENAI_API_VERSION,
-  deployment: process.env.AZURE_OPENAI_DEPLOYMENT,
+  endpoint: process.env.AZURE_OPENAI_ENDPOINT || "https://dummy.openai.azure.com/",
+  apiKey: process.env.AZURE_OPENAI_API_KEY || "dummy-key",
+  apiVersion: process.env.AZURE_OPENAI_API_VERSION || "2024-02-15-preview",
+  deployment: process.env.AZURE_OPENAI_DEPLOYMENT || "dummy-deployment",
 });
 
 // ---------- System prompt ----------
