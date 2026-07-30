@@ -356,42 +356,52 @@ export default function FinalPage() {
   xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
   xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
   xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml">
-  <w:tbl>
-    <w:tblPr>
-      <w:tblW w:w="0" w:type="auto"/>
-      <w:tblBorders>
-        ${noBorder}
-        <w:insideH w:val="none" w:sz="0" w:space="0" w:color="auto"/>
-        <w:insideV w:val="none" w:sz="0" w:space="0" w:color="auto"/>
-      </w:tblBorders>
-      <w:tblCellMar>
-        <w:left w:w="0" w:type="dxa"/>
-        <w:right w:w="144" w:type="dxa"/>
-      </w:tblCellMar>
-    </w:tblPr>
-    <w:tr>
-      <w:tc>
-        <w:tcPr>
-          <w:tcW w:w="720" w:type="dxa"/>
-          <w:vAlign w:val="center"/>
-          <w:tcBorders>${noBorder}</w:tcBorders>
-        </w:tcPr>
-        <w:p><w:pPr><w:spacing w:after="0" w:before="0"/></w:pPr>${headerLogoXml}</w:p>
-      </w:tc>
-      <w:tc>
-        <w:tcPr>
-          <w:tcW w:w="0" w:type="auto"/>
-          <w:vAlign w:val="center"/>
-          <w:tcBorders>${noBorder}</w:tcBorders>
-        </w:tcPr>
-        <w:p>
-          <w:pPr><w:spacing w:after="0" w:before="0"/><w:jc w:val="left"/></w:pPr>
-          ${hdrBrandRun}
-        </w:p>
-      </w:tc>
-    </w:tr>
-  </w:tbl>
-  <w:p><w:pPr><w:spacing w:after="80" w:before="0"/><w:pBdr><w:bottom w:val="single" w:sz="4" w:space="1" w:color="E5E7EB"/></w:pBdr></w:pPr></w:p>
+  <w:sdt>
+    <w:sdtPr>
+      <w:lock w:val="sdtContentLocked"/>
+      <w:tag w:val="BrandHeader"/>
+      <w:alias w:val="Brand Header"/>
+    </w:sdtPr>
+    <w:sdtContent>
+      <w:tbl>
+        <w:tblPr>
+          <w:tblW w:w="0" w:type="auto"/>
+          <w:tblBorders>
+            ${noBorder}
+            <w:insideH w:val="none" w:sz="0" w:space="0" w:color="auto"/>
+            <w:insideV w:val="none" w:sz="0" w:space="0" w:color="auto"/>
+          </w:tblBorders>
+          <w:tblCellMar>
+            <w:left w:w="0" w:type="dxa"/>
+            <w:right w:w="144" w:type="dxa"/>
+          </w:tblCellMar>
+        </w:tblPr>
+        <w:tr>
+          <w:tc>
+            <w:tcPr>
+              <w:tcW w:w="720" w:type="dxa"/>
+              <w:vAlign w:val="center"/>
+              <w:tcBorders>${noBorder}</w:tcBorders>
+            </w:tcPr>
+            <w:p><w:pPr><w:spacing w:after="0" w:before="0"/></w:pPr>${headerLogoXml}</w:p>
+          </w:tc>
+          <w:tc>
+            <w:tcPr>
+              <w:tcW w:w="0" w:type="auto"/>
+              <w:vAlign w:val="center"/>
+              <w:tcBorders>${noBorder}</w:tcBorders>
+            </w:tcPr>
+            <w:p>
+              <w:pPr><w:spacing w:after="0" w:before="0"/><w:jc w:val="left"/></w:pPr>
+              ${hdrBrandRun}
+            </w:p>
+          </w:tc>
+        </w:tr>
+      </w:tbl>
+      <w:p><w:pPr><w:spacing w:after="80" w:before="0"/><w:pBdr><w:bottom w:val="single" w:sz="4" w:space="1" w:color="E5E7EB"/></w:pBdr></w:pPr></w:p>
+    </w:sdtContent>
+  </w:sdt>
+  <w:p><w:pPr><w:spacing w:after="0" w:before="0"/></w:pPr></w:p>
 </w:hdr>`;
 
     // Header relationship file (logo image path is relative to word/)
