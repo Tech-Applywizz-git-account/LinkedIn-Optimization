@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { copyToClipboard } from "@/lib/utils";
+import JSZip from "jszip";
 
 /** ===== Types from your existing payload ===== */
 type Payload = {
@@ -12,6 +13,7 @@ type Payload = {
     jobDescription: string;
     industry: string;
     generatedAt: string;
+    personName?: string;
   };
   sections: {
     headline: string;
@@ -270,6 +272,245 @@ export default function FinalPage() {
     URL.revokeObjectURL(url);
   }
 
+  async function downloadWord() {
+    if (!payload) return;
+    const { meta, sections } = payload;
+    const S = (v: string) => sanitizeText(v || "");
+    const personName = meta.personName || "";
+
+    const entries: Array<[string, string]> = [
+      ["Headline", S(sections.headline)],
+      ["About", S(sections.about)],
+      ["Experience", S(sections.experience)],
+      ["Projects", S(sections.projects)],
+      ["Education", S(sections.education)],
+      ["Skills", S(sections.skills)],
+      ["Certifications", S(sections.certifications)],
+    ];
+
+    // Helper: escape XML special chars
+    const esc = (v: string) =>
+      v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+
+    // Build runs for a paragraph that can contain bold text (**bold**)
+    function buildRuns(text: string, defaultBold = false, szHalf = 22): string {
+      // Split on **...**
+      const parts = text.split(/(\*\*[^*]+\*\*)/g);
+      return parts.map((part) => {
+        const isBold = defaultBold || /^\*\*[^*]+\*\*$/.test(part);
+        const cleaned = esc(part.replace(/\*\*/g, ""));
+        return `<w:r><w:rPr>${isBold ? "<w:b/><w:bCs/>" : ""}<w:sz w:val="${szHalf}"/><w:szCs w:val="${szHalf}"/></w:rPr><w:t xml:space="preserve">${cleaned}</w:t></w:r>`;
+      }).join("");
+    }
+
+    // Build paragraph XML
+    function para(runs: string, extraPPr = ""): string {
+      return `<w:p><w:pPr>${extraPPr}</w:pPr>${runs}</w:p>`;
+    }
+
+    // Build a section block: bold heading (12pt=24half) + content paragraphs (11pt=22half)
+    function buildSection(title: string, content: string): string {
+      const headingPara = para(
+        buildRuns(title, true, 24),
+        "<w:spacing w:before=\"160\" w:after=\"80\"/>"
+      );
+      const lines = content.split("\n");
+      const contentParas = lines.map((line) => {
+        const trimmed = line.trim();
+        // Detect bullet lines
+        const isBullet = /^[•\-–—]/.test(trimmed);
+        const cleaned = trimmed.replace(/^[•\-–—]\s*/, "");
+        const indentPPr = isBullet
+          ? `<w:ind w:left="360" w:hanging="360"/><w:spacing w:before=\"40\" w:after=\"40\"/>`
+          : `<w:spacing w:before=\"40\" w:after=\"40\"/>`;
+        const bulletPrefix = isBullet
+          ? `<w:r><w:rPr><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/></w:rPr><w:t xml:space=\"preserve\">• </w:t></w:r>`
+          : "";
+        return para(bulletPrefix + buildRuns(cleaned, false, 22), indentPPr);
+      });
+      return [headingPara, ...contentParas].join("");
+    }
+
+    // Build logo paragraph (image inline) + APPLYWIZZ text on same line
+    let logoRelId = "";
+    let logoXml = "";
+    let logoRelXml = "";
+    let logoBytes: ArrayBuffer | null = null;
+
+    try {
+      const res = await fetch(LOGO_URL);
+      if (res.ok) {
+        logoBytes = await res.arrayBuffer();
+        logoRelId = "rId10";
+        // 48px logo ≈ 457200 EMU (1px = 9525 EMU)
+        const cx = 457200; // ~48px wide
+        const cy = 457200; // ~48px tall
+        logoXml = `<w:r><w:rPr/><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="1" name="Logo"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="1" name="Logo"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${logoRelId}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`;
+        logoRelXml = `<Relationship Id="${logoRelId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/logo.png"/>`;
+      }
+    } catch { /* logo optional */ }
+
+    // Brand row: borderless table so APPLYWIZZ text is vertically centered at logo midpoint
+    const noBorder = `<w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/>`;
+    const brandRun = `<w:r><w:rPr><w:b/><w:bCs/><w:sz w:val="36"/><w:szCs w:val="36"/><w:color w:val="000000"/></w:rPr><w:t xml:space="preserve">APPLYWIZZ</w:t></w:r>`;
+
+    // Locked SDT wrapping a borderless 1-row 2-cell table: [logo cell] [text cell]
+    const brandPara = `<w:sdt>
+      <w:sdtPr>
+        <w:lock w:val="sdtLocked"/>
+        <w:tag w:val="BrandHeader"/>
+        <w:alias w:val="Brand Header"/>
+      </w:sdtPr>
+      <w:sdtContent>
+        <w:tbl>
+          <w:tblPr>
+            <w:tblW w:w="0" w:type="auto"/>
+            <w:tblBorders>
+              ${noBorder}
+              <w:insideH w:val="none" w:sz="0" w:space="0" w:color="auto"/>
+              <w:insideV w:val="none" w:sz="0" w:space="0" w:color="auto"/>
+            </w:tblBorders>
+            <w:tblCellMar>
+              <w:left w:w="0" w:type="dxa"/>
+              <w:right w:w="120" w:type="dxa"/>
+            </w:tblCellMar>
+          </w:tblPr>
+          <w:tr>
+            <w:tc>
+              <w:tcPr>
+                <w:tcW w:w="720" w:type="dxa"/>
+                <w:vAlign w:val="center"/>
+                <w:tcBorders>${noBorder}</w:tcBorders>
+              </w:tcPr>
+              <w:p>
+                <w:pPr><w:spacing w:after="0" w:before="0"/></w:pPr>
+                ${logoXml}
+              </w:p>
+            </w:tc>
+            <w:tc>
+              <w:tcPr>
+                <w:tcW w:w="0" w:type="auto"/>
+                <w:vAlign w:val="center"/>
+                <w:tcBorders>${noBorder}</w:tcBorders>
+              </w:tcPr>
+              <w:p>
+                <w:pPr>
+                  <w:spacing w:after="0" w:before="0"/>
+                  <w:jc w:val="left"/>
+                </w:pPr>
+                ${brandRun}
+              </w:p>
+            </w:tc>
+          </w:tr>
+        </w:tbl>
+      </w:sdtContent>
+    </w:sdt>`;
+
+    // Spacing paragraph after brand
+    const spacePara = `<w:p><w:pPr><w:spacing w:before="120" w:after="120"/></w:pPr></w:p>`;
+
+    // Person name paragraph (14pt bold = 28 half)
+    const namePara = personName
+      ? para(buildRuns(personName, true, 28), `<w:spacing w:before=\"80\" w:after=\"160\"/>`)
+      : "";
+
+    // Sections
+    const sectionsXml = entries
+      .filter(([, c]) => c.trim())
+      .map(([t, c]) => buildSection(t, c))
+      .join("");
+
+    // Full document body
+    const bodyXml = [
+      brandPara,
+      spacePara,
+      namePara,
+      sectionsXml,
+    ].join("");
+
+    const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:o="urn:schemas-microsoft-com:office:office"
+  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+  xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math"
+  xmlns:v="urn:schemas-microsoft-com:vml"
+  xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing"
+  xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+  xmlns:w10="urn:schemas-microsoft-com:office:word"
+  xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+  xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"
+  xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup"
+  xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk"
+  xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml"
+  xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
+  mc:Ignorable="w14 wp14">
+  <w:body>
+    ${bodyXml}
+    <w:sectPr>
+      <w:pgSz w:w="12240" w:h="15840"/>
+      <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/>
+    </w:sectPr>
+  </w:body>
+</w:document>`;
+
+    const relsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings" Target="settings.xml"/>
+  ${logoRelXml}
+</Relationships>`;
+
+    // Settings XML: enforce document protection so the brand SDT cannot be edited
+    const settingsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:documentProtection w:edit="forms" w:enforcement="1"/>
+</w:settings>`;
+
+    const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:docDefaults><w:rPrDefault><w:rPr>
+    <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>
+    <w:sz w:val="22"/><w:szCs w:val="22"/>
+    <w:color w:val="000000" w:themeColor="dark1" w:themeShade="FF"/>
+  </w:rPr></w:rPrDefault></w:docDefaults>
+</w:styles>`;
+
+    const contentTypesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Default Extension="png" ContentType="image/png"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+  <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+  <Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>
+</Types>`;
+
+    const appRelsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`;
+
+    const zip = new JSZip();
+    zip.file("[Content_Types].xml", contentTypesXml);
+    zip.file("_rels/.rels", appRelsXml);
+    zip.file("word/document.xml", documentXml);
+    zip.file("word/styles.xml", stylesXml);
+    zip.file("word/settings.xml", settingsXml);
+    zip.file("word/_rels/document.xml.rels", relsXml);
+    if (logoBytes) {
+      zip.file("word/media/logo.png", logoBytes);
+    }
+
+    const blob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "applywizz_final_optimization.docx";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   if (!payload) {
     return (
       <main className="max-w-5xl mx-auto p-6">
@@ -300,7 +541,7 @@ export default function FinalPage() {
       <header className="bg-white border-b border-slate-200 print-bg">
         <div className="flex items-center gap-3 py-3">
           <img src={logoSrc} alt="Company Logo" className="h-12 w-auto object-contain" />
-          <div className="text-xl font-bold tracking-wide">{COMPANY_NAME}</div>
+          <div className="text-xl font-bold tracking-wide text-gray-900">{COMPANY_NAME}</div>
         </div>
       </header>
 
@@ -337,8 +578,15 @@ export default function FinalPage() {
               </>
             )}
           </button>
-          <button onClick={downloadHtml} className="px-3 py-2 rounded border">Download .md</button>
-          <button onClick={() => window.print()} className="px-3 py-2 rounded border">Print</button>
+          <button onClick={downloadHtml} className="px-3 py-2 rounded border text-sm font-medium">Download HTML</button>
+          <button
+            onClick={downloadWord}
+            className="px-3 py-2 rounded border text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-1.5 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            Download Word
+          </button>
+          <button onClick={() => window.print()} className="px-3 py-2 rounded border text-sm font-medium">Print</button>
         </div>
       </div>
 

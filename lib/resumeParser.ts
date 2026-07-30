@@ -131,7 +131,11 @@ export function parseResumeText(text: string): ParsedResume {
 
   const yearsExperience = estimateYears(experiences);
 
+  // Extract the candidate's name from the preamble (first meaningful non-metadata line)
+  const name = extractNameFromPreamble(sections["preamble"] || "");
+
   return {
+    name: name || undefined,
     summary: s(summaryBlock) || undefined,
     experiences,
     internships,
@@ -142,6 +146,29 @@ export function parseResumeText(text: string): ParsedResume {
     yearsExperience,
     rawSections: sections,
   };
+}
+
+/**
+ * Extracts the candidate's full name from the top of the resume.
+ * The name is assumed to be the first non-empty line of the preamble
+ * that is NOT an email, phone number, URL, or address fragment.
+ */
+function extractNameFromPreamble(preamble: string): string {
+  if (!preamble) return "";
+  const lines = preamble.split("\n").map((l) => l.trim()).filter(Boolean);
+  for (const line of lines) {
+    // Skip lines that look like email, phone, URL, or contain digits (addresses)
+    if (/[@|]/.test(line)) continue;                     // email or pipe separators
+    if (/\d{5,}/.test(line)) continue;                   // long digit sequences (zip/phone)
+    if (/https?:\/\/|www\./i.test(line)) continue;       // URLs
+    if (/^[+]?[\d\s()\-.]{7,}$/.test(line)) continue;   // phone numbers
+    if (/linkedin\.com|github\.com/i.test(line)) continue; // social profiles
+    // Must contain at least 2 words (first + last name) and only letters/spaces/hyphens
+    if (/^[A-Za-z][A-Za-z\s\-'.]{2,50}$/.test(line) && line.trim().split(/\s+/).length >= 2) {
+      return line.trim();
+    }
+  }
+  return "";
 }
 
 export const parseResume = parseResumeText;
