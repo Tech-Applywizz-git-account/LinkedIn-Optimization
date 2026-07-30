@@ -293,7 +293,7 @@ export default function FinalPage() {
       v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
 
     // Build runs for a paragraph that can contain bold text (**bold**)
-    function buildRuns(text: string, defaultBold = false, szHalf = 22): string {
+    function buildRuns(text: string, defaultBold = false, szHalf = 20): string {
       // Split on **...**
       const parts = text.split(/(\*\*[^*]+\*\*)/g);
       return parts.map((part) => {
@@ -320,13 +320,14 @@ export default function FinalPage() {
         // Detect bullet lines
         const isBullet = /^[•\-–—]/.test(trimmed);
         const cleaned = trimmed.replace(/^[•\-–—]\s*/, "");
+        const justifyPPr = `<w:jc w:val="both"/>`;
         const indentPPr = isBullet
-          ? `<w:ind w:left="360" w:hanging="360"/><w:spacing w:before=\"40\" w:after=\"40\"/>`
-          : `<w:spacing w:before=\"40\" w:after=\"40\"/>`;
+          ? `${justifyPPr}<w:spacing w:before="40" w:after="40"/><w:ind w:left="360" w:hanging="360"/>`
+          : `${justifyPPr}<w:spacing w:before="40" w:after="40"/>`;
         const bulletPrefix = isBullet
-          ? `<w:r><w:rPr><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/></w:rPr><w:t xml:space=\"preserve\">• </w:t></w:r>`
+          ? `<w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve">– </w:t></w:r>`
           : "";
-        return para(bulletPrefix + buildRuns(cleaned, false, 22), indentPPr);
+        return para(bulletPrefix + buildRuns(cleaned, false, 20), indentPPr);
       });
       return [headingPara, ...contentParas].join("");
     }
@@ -340,9 +341,9 @@ export default function FinalPage() {
       const res = await fetch("/image.png");
       if (res.ok) {
         logoBytes = await res.arrayBuffer();
-        // Scale to fit page width (6.5 inches)
-        const cx = 5943600; 
-        const cy = 1348000;
+        // Use a smaller logo size in the header (approx 2 inches wide)
+        const cx = 1905000; 
+        const cy = 431966;
         headerLogoXml = `<w:r><w:rPr/><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="1" name="HeaderImage"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="1" name="HeaderImage"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${hdrLogoRelId}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`;
       }
     } catch { /* image optional */ }
@@ -362,7 +363,7 @@ export default function FinalPage() {
     </w:sdtPr>
     <w:sdtContent>
       <w:p>
-        <w:pPr><w:jc w:val="center"/><w:spacing w:after="80" w:before="0"/></w:pPr>
+        <w:pPr><w:jc w:val="left"/><w:spacing w:after="80" w:before="0"/></w:pPr>
         ${headerLogoXml}
       </w:p>
     </w:sdtContent>
@@ -381,9 +382,9 @@ export default function FinalPage() {
 
 
 
-    // Person name paragraph (14pt bold = 28 half)
+    // Person name paragraph (14pt bold = 28 half), right aligned
     const namePara = personName
-      ? para(buildRuns(personName, true, 28), `<w:spacing w:before=\"80\" w:after=\"160\"/>`)
+      ? para(buildRuns(personName, true, 28), `<w:jc w:val="right"/><w:spacing w:before="80" w:after="160"/>`)
       : "";
 
     // Sections
@@ -441,7 +442,7 @@ export default function FinalPage() {
 <w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
   <w:docDefaults><w:rPrDefault><w:rPr>
     <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>
-    <w:sz w:val="22"/><w:szCs w:val="22"/>
+    <w:sz w:val="20"/><w:szCs w:val="20"/>
     <w:color w:val="000000" w:themeColor="dark1" w:themeShade="FF"/>
   </w:rPr></w:rPrDefault></w:docDefaults>
 </w:styles>`;
