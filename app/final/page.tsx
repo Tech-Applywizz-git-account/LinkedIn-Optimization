@@ -352,7 +352,7 @@ export default function FinalPage() {
 
     // Brand row: logo + APPLYWIZZ on the SAME line, locked via SDT content control
     // Logo uses inline drawing; text run uses vertAlign to match logo center
-    const brandRun = `<w:r><w:rPr><w:b/><w:bCs/><w:sz w:val="36"/><w:szCs w:val="36"/><w:color w:val="0077B5"/><w:vertAlign w:val="baseline"/></w:rPr><w:t xml:space="preserve">  APPLYWIZZ</w:t></w:r>`;
+    const brandRun = `<w:r><w:rPr><w:b/><w:bCs/><w:sz w:val="36"/><w:szCs w:val="36"/><w:color w:val="000000"/><w:vertAlign w:val="baseline"/></w:rPr><w:t xml:space="preserve">  APPLYWIZZ</w:t></w:r>`;
 
     // Wrap the brand paragraph inside a locked SDT (Structured Document Tag) so it cannot be edited
     const brandPara = `<w:sdt>
