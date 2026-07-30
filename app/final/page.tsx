@@ -350,11 +350,11 @@ export default function FinalPage() {
       }
     } catch { /* logo optional */ }
 
-    // Brand row: logo + APPLYWIZZ on the SAME line, locked via SDT content control
-    // Logo uses inline drawing; text run uses vertAlign to match logo center
-    const brandRun = `<w:r><w:rPr><w:b/><w:bCs/><w:sz w:val="36"/><w:szCs w:val="36"/><w:color w:val="000000"/><w:vertAlign w:val="baseline"/></w:rPr><w:t xml:space="preserve">  APPLYWIZZ</w:t></w:r>`;
+    // Brand row: borderless table so APPLYWIZZ text is vertically centered at logo midpoint
+    const noBorder = `<w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/>`;
+    const brandRun = `<w:r><w:rPr><w:b/><w:bCs/><w:sz w:val="36"/><w:szCs w:val="36"/><w:color w:val="000000"/></w:rPr><w:t xml:space="preserve">APPLYWIZZ</w:t></w:r>`;
 
-    // Wrap the brand paragraph inside a locked SDT (Structured Document Tag) so it cannot be edited
+    // Locked SDT wrapping a borderless 1-row 2-cell table: [logo cell] [text cell]
     const brandPara = `<w:sdt>
       <w:sdtPr>
         <w:lock w:val="sdtLocked"/>
@@ -362,14 +362,47 @@ export default function FinalPage() {
         <w:alias w:val="Brand Header"/>
       </w:sdtPr>
       <w:sdtContent>
-        <w:p>
-          <w:pPr>
-            <w:spacing w:after="0" w:before="0"/>
-            <w:jc w:val="left"/>
-          </w:pPr>
-          ${logoXml}
-          ${brandRun}
-        </w:p>
+        <w:tbl>
+          <w:tblPr>
+            <w:tblW w:w="0" w:type="auto"/>
+            <w:tblBorders>
+              ${noBorder}
+              <w:insideH w:val="none" w:sz="0" w:space="0" w:color="auto"/>
+              <w:insideV w:val="none" w:sz="0" w:space="0" w:color="auto"/>
+            </w:tblBorders>
+            <w:tblCellMar>
+              <w:left w:w="0" w:type="dxa"/>
+              <w:right w:w="120" w:type="dxa"/>
+            </w:tblCellMar>
+          </w:tblPr>
+          <w:tr>
+            <w:tc>
+              <w:tcPr>
+                <w:tcW w:w="720" w:type="dxa"/>
+                <w:vAlign w:val="center"/>
+                <w:tcBorders>${noBorder}</w:tcBorders>
+              </w:tcPr>
+              <w:p>
+                <w:pPr><w:spacing w:after="0" w:before="0"/></w:pPr>
+                ${logoXml}
+              </w:p>
+            </w:tc>
+            <w:tc>
+              <w:tcPr>
+                <w:tcW w:w="0" w:type="auto"/>
+                <w:vAlign w:val="center"/>
+                <w:tcBorders>${noBorder}</w:tcBorders>
+              </w:tcPr>
+              <w:p>
+                <w:pPr>
+                  <w:spacing w:after="0" w:before="0"/>
+                  <w:jc w:val="left"/>
+                </w:pPr>
+                ${brandRun}
+              </w:p>
+            </w:tc>
+          </w:tr>
+        </w:tbl>
       </w:sdtContent>
     </w:sdt>`;
 
@@ -439,6 +472,7 @@ export default function FinalPage() {
   <w:docDefaults><w:rPrDefault><w:rPr>
     <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>
     <w:sz w:val="22"/><w:szCs w:val="22"/>
+    <w:color w:val="000000" w:themeColor="dark1" w:themeShade="FF"/>
   </w:rPr></w:rPrDefault></w:docDefaults>
 </w:styles>`;
 
@@ -507,7 +541,7 @@ export default function FinalPage() {
       <header className="bg-white border-b border-slate-200 print-bg">
         <div className="flex items-center gap-3 py-3">
           <img src={logoSrc} alt="Company Logo" className="h-12 w-auto object-contain" />
-          <div className="text-xl font-bold tracking-wide">{COMPANY_NAME}</div>
+          <div className="text-xl font-bold tracking-wide text-gray-900">{COMPANY_NAME}</div>
         </div>
       </header>
 
