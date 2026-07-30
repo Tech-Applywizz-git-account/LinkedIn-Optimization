@@ -350,9 +350,28 @@ export default function FinalPage() {
       }
     } catch { /* logo optional */ }
 
-    // Brand row: logo + APPLYWIZZ (bold 18pt=36half)
-    const brandRun = `<w:r><w:rPr><w:b/><w:bCs/><w:sz w:val="36"/><w:szCs w:val="36"/><w:color w:val="0077B5"/></w:rPr><w:t xml:space="preserve">  APPLYWIZZ</w:t></w:r>`;
-    const brandPara = `<w:p><w:pPr><w:spacing w:after="0"/></w:pPr>${logoXml}${brandRun}</w:p>`;
+    // Brand row: logo + APPLYWIZZ on the SAME line, locked via SDT content control
+    // Logo uses inline drawing; text run uses vertAlign to match logo center
+    const brandRun = `<w:r><w:rPr><w:b/><w:bCs/><w:sz w:val="36"/><w:szCs w:val="36"/><w:color w:val="0077B5"/><w:vertAlign w:val="baseline"/></w:rPr><w:t xml:space="preserve">  APPLYWIZZ</w:t></w:r>`;
+
+    // Wrap the brand paragraph inside a locked SDT (Structured Document Tag) so it cannot be edited
+    const brandPara = `<w:sdt>
+      <w:sdtPr>
+        <w:lock w:val="sdtLocked"/>
+        <w:tag w:val="BrandHeader"/>
+        <w:alias w:val="Brand Header"/>
+      </w:sdtPr>
+      <w:sdtContent>
+        <w:p>
+          <w:pPr>
+            <w:spacing w:after="0" w:before="0"/>
+            <w:jc w:val="left"/>
+          </w:pPr>
+          ${logoXml}
+          ${brandRun}
+        </w:p>
+      </w:sdtContent>
+    </w:sdt>`;
 
     // Spacing paragraph after brand
     const spacePara = `<w:p><w:pPr><w:spacing w:before="120" w:after="120"/></w:pPr></w:p>`;
@@ -405,8 +424,15 @@ export default function FinalPage() {
     const relsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings" Target="settings.xml"/>
   ${logoRelXml}
 </Relationships>`;
+
+    // Settings XML: enforce document protection so the brand SDT cannot be edited
+    const settingsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:documentProtection w:edit="forms" w:enforcement="1"/>
+</w:settings>`;
 
     const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
@@ -423,6 +449,7 @@ export default function FinalPage() {
   <Default Extension="png" ContentType="image/png"/>
   <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
   <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+  <Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>
 </Types>`;
 
     const appRelsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -435,6 +462,7 @@ export default function FinalPage() {
     zip.file("_rels/.rels", appRelsXml);
     zip.file("word/document.xml", documentXml);
     zip.file("word/styles.xml", stylesXml);
+    zip.file("word/settings.xml", settingsXml);
     zip.file("word/_rels/document.xml.rels", relsXml);
     if (logoBytes) {
       zip.file("word/media/logo.png", logoBytes);
