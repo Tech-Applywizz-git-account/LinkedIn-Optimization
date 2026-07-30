@@ -331,25 +331,23 @@ export default function FinalPage() {
       return [headingPara, ...contentParas].join("");
     }
 
-    // ── Fetch logo (used in the Word page-header, shown on every page) ──────────
+    // ── Fetch image (used in the Word page-header, shown on every page) ──────────
     let logoBytes: ArrayBuffer | null = null;
     let headerLogoXml = "";
     const hdrLogoRelId = "rId1"; // relative to header1.xml.rels
 
     try {
-      const res = await fetch(LOGO_URL);
+      const res = await fetch("/image.png");
       if (res.ok) {
         logoBytes = await res.arrayBuffer();
-        const cx = 457200; // 48px × 9525 EMU/px
-        const cy = 457200;
-        headerLogoXml = `<w:r><w:rPr/><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="1" name="Logo"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="1" name="Logo"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${hdrLogoRelId}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`;
+        // Scale to fit page width (6.5 inches)
+        const cx = 5943600; 
+        const cy = 1348000;
+        headerLogoXml = `<w:r><w:rPr/><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="1" name="HeaderImage"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="1" name="HeaderImage"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${hdrLogoRelId}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`;
       }
-    } catch { /* logo optional */ }
+    } catch { /* image optional */ }
 
-    // ── Word page header (logo + APPLYWIZZ, repeats on every page) ────────────
-    const noBorder = `<w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/>`;
-    const hdrBrandRun = `<w:r><w:rPr><w:b/><w:bCs/><w:sz w:val="36"/><w:szCs w:val="36"/><w:color w:val="000000"/></w:rPr><w:t xml:space="preserve">APPLYWIZZ</w:t></w:r>`;
-
+    // ── Word page header (image.png, repeats on every page) ────────────
     const headerXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:hdr xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
   xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
@@ -363,52 +361,20 @@ export default function FinalPage() {
       <w:alias w:val="Brand Header"/>
     </w:sdtPr>
     <w:sdtContent>
-      <w:tbl>
-        <w:tblPr>
-          <w:tblW w:w="0" w:type="auto"/>
-          <w:tblBorders>
-            ${noBorder}
-            <w:insideH w:val="none" w:sz="0" w:space="0" w:color="auto"/>
-            <w:insideV w:val="none" w:sz="0" w:space="0" w:color="auto"/>
-          </w:tblBorders>
-          <w:tblCellMar>
-            <w:left w:w="0" w:type="dxa"/>
-            <w:right w:w="144" w:type="dxa"/>
-          </w:tblCellMar>
-        </w:tblPr>
-        <w:tr>
-          <w:tc>
-            <w:tcPr>
-              <w:tcW w:w="720" w:type="dxa"/>
-              <w:vAlign w:val="center"/>
-              <w:tcBorders>${noBorder}</w:tcBorders>
-            </w:tcPr>
-            <w:p><w:pPr><w:spacing w:after="0" w:before="0"/></w:pPr>${headerLogoXml}</w:p>
-          </w:tc>
-          <w:tc>
-            <w:tcPr>
-              <w:tcW w:w="0" w:type="auto"/>
-              <w:vAlign w:val="center"/>
-              <w:tcBorders>${noBorder}</w:tcBorders>
-            </w:tcPr>
-            <w:p>
-              <w:pPr><w:spacing w:after="0" w:before="0"/><w:jc w:val="left"/></w:pPr>
-              ${hdrBrandRun}
-            </w:p>
-          </w:tc>
-        </w:tr>
-      </w:tbl>
-      <w:p><w:pPr><w:spacing w:after="80" w:before="0"/><w:pBdr><w:bottom w:val="single" w:sz="4" w:space="1" w:color="E5E7EB"/></w:pBdr></w:pPr></w:p>
+      <w:p>
+        <w:pPr><w:jc w:val="center"/><w:spacing w:after="80" w:before="0"/></w:pPr>
+        ${headerLogoXml}
+      </w:p>
     </w:sdtContent>
   </w:sdt>
   <w:p><w:pPr><w:spacing w:after="0" w:before="0"/></w:pPr></w:p>
 </w:hdr>`;
 
-    // Header relationship file (logo image path is relative to word/)
+    // Header relationship file (image path is relative to word/)
     const headerRelsXml = logoBytes
       ? `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="${hdrLogoRelId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/logo.png"/>
+  <Relationship Id="${hdrLogoRelId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image.png"/>
 </Relationships>`
       : `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>`;
@@ -506,7 +472,7 @@ export default function FinalPage() {
     zip.file("word/header1.xml", headerXml);
     zip.file("word/_rels/header1.xml.rels", headerRelsXml);
     if (logoBytes) {
-      zip.file("word/media/logo.png", logoBytes);
+      zip.file("word/media/image.png", logoBytes);
     }
 
     const blob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
