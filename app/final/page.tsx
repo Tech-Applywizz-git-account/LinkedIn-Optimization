@@ -293,7 +293,7 @@ export default function FinalPage() {
       v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
 
     // Build runs for a paragraph that can contain bold text (**bold**)
-    function buildRuns(text: string, defaultBold = false, szHalf = 22): string {
+    function buildRuns(text: string, defaultBold = false, szHalf = 20): string {
       // Split on **...**
       const parts = text.split(/(\*\*[^*]+\*\*)/g);
       return parts.map((part) => {
@@ -320,36 +320,33 @@ export default function FinalPage() {
         // Detect bullet lines
         const isBullet = /^[•\-–—]/.test(trimmed);
         const cleaned = trimmed.replace(/^[•\-–—]\s*/, "");
-        const indentPPr = isBullet
-          ? `<w:ind w:left="360" w:hanging="360"/><w:spacing w:before=\"40\" w:after=\"40\"/>`
-          : `<w:spacing w:before=\"40\" w:after=\"40\"/>`;
+        const justifyPPr = `<w:jc w:val="both"/>`;
+        const indentPPr = `${justifyPPr}<w:spacing w:before="40" w:after="40"/>`;
         const bulletPrefix = isBullet
-          ? `<w:r><w:rPr><w:sz w:val=\"22\"/><w:szCs w:val=\"22\"/></w:rPr><w:t xml:space=\"preserve\">• </w:t></w:r>`
+          ? `<w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve">– </w:t></w:r>`
           : "";
-        return para(bulletPrefix + buildRuns(cleaned, false, 22), indentPPr);
+        return para(bulletPrefix + buildRuns(cleaned, false, 20), indentPPr);
       });
       return [headingPara, ...contentParas].join("");
     }
 
-    // ── Fetch logo (used in the Word page-header, shown on every page) ──────────
+    // ── Fetch image (used in the Word page-header, shown on every page) ──────────
     let logoBytes: ArrayBuffer | null = null;
     let headerLogoXml = "";
     const hdrLogoRelId = "rId1"; // relative to header1.xml.rels
 
     try {
-      const res = await fetch(LOGO_URL);
+      const res = await fetch("/image.png");
       if (res.ok) {
         logoBytes = await res.arrayBuffer();
-        const cx = 457200; // 48px × 9525 EMU/px
-        const cy = 457200;
-        headerLogoXml = `<w:r><w:rPr/><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="1" name="Logo"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="1" name="Logo"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${hdrLogoRelId}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`;
+        // Use a smaller logo size in the header (approx 2 inches wide)
+        const cx = 1905000; 
+        const cy = 431966;
+        headerLogoXml = `<w:r><w:rPr/><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="1" name="HeaderImage"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="1" name="HeaderImage"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${hdrLogoRelId}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`;
       }
-    } catch { /* logo optional */ }
+    } catch { /* image optional */ }
 
-    // ── Word page header (logo + APPLYWIZZ, repeats on every page) ────────────
-    const noBorder = `<w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/>`;
-    const hdrBrandRun = `<w:r><w:rPr><w:b/><w:bCs/><w:sz w:val="36"/><w:szCs w:val="36"/><w:color w:val="000000"/></w:rPr><w:t xml:space="preserve">APPLYWIZZ</w:t></w:r>`;
-
+    // ── Word page header (image.png, repeats on every page) ────────────
     const headerXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:hdr xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
   xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
@@ -363,61 +360,29 @@ export default function FinalPage() {
       <w:alias w:val="Brand Header"/>
     </w:sdtPr>
     <w:sdtContent>
-      <w:tbl>
-        <w:tblPr>
-          <w:tblW w:w="0" w:type="auto"/>
-          <w:tblBorders>
-            ${noBorder}
-            <w:insideH w:val="none" w:sz="0" w:space="0" w:color="auto"/>
-            <w:insideV w:val="none" w:sz="0" w:space="0" w:color="auto"/>
-          </w:tblBorders>
-          <w:tblCellMar>
-            <w:left w:w="0" w:type="dxa"/>
-            <w:right w:w="144" w:type="dxa"/>
-          </w:tblCellMar>
-        </w:tblPr>
-        <w:tr>
-          <w:tc>
-            <w:tcPr>
-              <w:tcW w:w="720" w:type="dxa"/>
-              <w:vAlign w:val="center"/>
-              <w:tcBorders>${noBorder}</w:tcBorders>
-            </w:tcPr>
-            <w:p><w:pPr><w:spacing w:after="0" w:before="0"/></w:pPr>${headerLogoXml}</w:p>
-          </w:tc>
-          <w:tc>
-            <w:tcPr>
-              <w:tcW w:w="0" w:type="auto"/>
-              <w:vAlign w:val="center"/>
-              <w:tcBorders>${noBorder}</w:tcBorders>
-            </w:tcPr>
-            <w:p>
-              <w:pPr><w:spacing w:after="0" w:before="0"/><w:jc w:val="left"/></w:pPr>
-              ${hdrBrandRun}
-            </w:p>
-          </w:tc>
-        </w:tr>
-      </w:tbl>
-      <w:p><w:pPr><w:spacing w:after="80" w:before="0"/><w:pBdr><w:bottom w:val="single" w:sz="4" w:space="1" w:color="E5E7EB"/></w:pBdr></w:pPr></w:p>
+      <w:p>
+        <w:pPr><w:jc w:val="left"/><w:spacing w:after="80" w:before="0"/></w:pPr>
+        ${headerLogoXml}
+      </w:p>
     </w:sdtContent>
   </w:sdt>
   <w:p><w:pPr><w:spacing w:after="0" w:before="0"/></w:pPr></w:p>
 </w:hdr>`;
 
-    // Header relationship file (logo image path is relative to word/)
+    // Header relationship file (image path is relative to word/)
     const headerRelsXml = logoBytes
       ? `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="${hdrLogoRelId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/logo.png"/>
+  <Relationship Id="${hdrLogoRelId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image.png"/>
 </Relationships>`
       : `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>`;
 
 
 
-    // Person name paragraph (14pt bold = 28 half)
+    // Person name paragraph (14pt bold = 28 half), right aligned
     const namePara = personName
-      ? para(buildRuns(personName, true, 28), `<w:spacing w:before=\"80\" w:after=\"160\"/>`)
+      ? para(buildRuns(personName, true, 28), `<w:jc w:val="right"/><w:spacing w:before="80" w:after="160"/>`)
       : "";
 
     // Sections
@@ -475,7 +440,7 @@ export default function FinalPage() {
 <w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
   <w:docDefaults><w:rPrDefault><w:rPr>
     <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>
-    <w:sz w:val="22"/><w:szCs w:val="22"/>
+    <w:sz w:val="20"/><w:szCs w:val="20"/>
     <w:color w:val="000000" w:themeColor="dark1" w:themeShade="FF"/>
   </w:rPr></w:rPrDefault></w:docDefaults>
 </w:styles>`;
@@ -506,7 +471,7 @@ export default function FinalPage() {
     zip.file("word/header1.xml", headerXml);
     zip.file("word/_rels/header1.xml.rels", headerRelsXml);
     if (logoBytes) {
-      zip.file("word/media/logo.png", logoBytes);
+      zip.file("word/media/image.png", logoBytes);
     }
 
     const blob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
