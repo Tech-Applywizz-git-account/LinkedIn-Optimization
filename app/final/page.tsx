@@ -321,9 +321,7 @@ export default function FinalPage() {
         const isBullet = /^[•\-–—]/.test(trimmed);
         const cleaned = trimmed.replace(/^[•\-–—]\s*/, "");
         const justifyPPr = `<w:jc w:val="both"/>`;
-        const indentPPr = isBullet
-          ? `${justifyPPr}<w:spacing w:before="40" w:after="40"/><w:ind w:left="360" w:hanging="360"/>`
-          : `${justifyPPr}<w:spacing w:before="40" w:after="40"/>`;
+        const indentPPr = `${justifyPPr}<w:spacing w:before="40" w:after="40"/>`;
         const bulletPrefix = isBullet
           ? `<w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve">– </w:t></w:r>`
           : "";
