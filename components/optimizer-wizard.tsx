@@ -476,7 +476,7 @@ export default function OptimizerWizard({
           industry: industry || "",
           generatedAt: new Date().toISOString(),
           keywords,
-          personName: parsed?.name || "",
+          personName: parsed?.name || extractNameFromText(resumeText) || "",
         },
         sections: { ...outputs },
         resumeText,
@@ -501,6 +501,30 @@ export default function OptimizerWizard({
 
   function prev() {
     if (stepIndex > 0) setStepIndex(stepIndex - 1);
+  }
+
+  // Heuristic: extract a probable person name from the resume text when parsed.name is missing.
+  // Prefer uppercase candidate names and ignore lowercase lines.
+  function extractNameFromText(text: string | null | undefined): string {
+    if (!text) return "";
+    const normalized = text.replace(/\r\n/g, "\n").replace(/\t+/g, " ").trim();
+    const lines = normalized.split(/\n/).map((l) => l.trim()).filter(Boolean);
+
+    const looksLikeUppercaseName = (cleaned: string) => {
+      if (!cleaned || cleaned !== cleaned.toUpperCase()) return false;
+      const tokens = cleaned.split(/\s+/).filter(Boolean);
+      if (tokens.length < 2 || tokens.length > 4) return false;
+      return tokens.every((t) => /^[A-Z][A-Z'’\-]+$/.test(t));
+    };
+
+    for (let i = 0; i < Math.min(8, lines.length); i++) {
+      const line = lines[i];
+      const cleaned = line.split(/[|,–—\t]/)[0].trim();
+      if (looksLikeUppercaseName(cleaned)) return cleaned;
+    }
+
+    const globalMatch = normalized.match(/([A-Z][A-Z'’\-]+(?:\s+[A-Z][A-Z'’\-]+){1,3})/);
+    return globalMatch?.[1]?.trim() ?? "";
   }
 
   const isGenerating = !!generating[step.key];

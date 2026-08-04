@@ -137,13 +137,14 @@
 //       return `Task:
 // Create a LinkedIn HEADLINE using ONLY facts found in [Resume_Text].
 // - Use the most recent role/title from the resume (no aspirational or target role).
-// - ALWAYS include total years of experience if it is explicitly present in the resume (e.g., "4+ Years").
-// - Include up to 3 skills explicitly listed in the resume (no extras, no keyword injection).
-// - Format: Role/Title | [X]+ Years in [Skill1, Skill2, Skill3] | [Short phrase about core expertise from resume]
+// - DO NOT include explicit years of experience in the headline (e.g., "2+ years", "3+ years", "4 Years"). Omit numeric experience mentions even if present in the resume.
+// - Do NOT infer seniority prefixes solely from years (avoid adding "Junior"/"Senior" based only on numeric years).
+// - Include up to 3 concise skills explicitly listed in the resume (no extras, no keyword injection).
+// - Format: Role/Title | Skill1, Skill2, Skill3 | Short phrase about core expertise from resume
 // - Keep under 220 characters. Title Case. Return ONLY the single headline line.
-
+//
 // Example Output:
-// Full Stack Java Developer | 4+ Years in Spring Boot, React, AWS | Building Scalable Microservices & Cloud-Native Applications`;
+// Full Stack Java Developer | Spring Boot, React, AWS | Building Scalable Microservices & Cloud-Native Applications`;
 
 //     /* ---------------- ABOUT (resume-only) ---------------- */
 //     case "about":
@@ -1584,6 +1585,92 @@ export async function POST(req: Request) {
     const { text, usage } = await callOpenAIPlain(model, userPrompt, maxTokens);
     const cleaned = sanitizeLLMText(text || "");
 
+    // Post-process specific sections to enforce client requirements (avoid numeric years in headline,
+    // keep only compact heading for education, normalize skills lists).
+    function postProcessSection(sectionName: string, content: string): string {
+      if (!content) return content;
+      // Helper to remove explicit year mentions like '2+ years', '5 years', '2018-2022'
+      const removeYearPatterns = (s: string) =>
+        s
+          .replace(/\b\d{4}\b/g, "") // bare years like 2022
+          .replace(/\b\d+\+?\s*(years|yrs|year)\b/gi, "")
+          .replace(/\b\d+\s*-\s*\d+\b/g, "")
+          .replace(/\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\.?\s+\d{4}\b/gi, (m) => m)
+          .replace(/\s{2,}/g, " ")
+          .trim();
+
+      if (sectionName === "headline") {
+        // Remove year mentions but keep other text. Also remove parenthetical years.
+        let out = content.replace(/\([^)]*\d{4}[^)]*\)/g, "");
+        out = removeYearPatterns(out);
+        // Collapse repeated separators and trim
+        out = out.replace(/\s*\|\s*/g, " | ").replace(/\s{2,}/g, " ").trim();
+        return out;
+      }
+
+      if (sectionName === "education") {
+        const rawText = content.replace(/\r?\n/g, "\n").trim();
+        const degreeKeywords = /(degree|bachelor|master|ba\b|bs\b|msc\b|ms\b|phd\b|diploma)/i;
+
+        const processEntry = (entry: string) => {
+          const lines = entry.split("\n").map((l) => l.trim()).filter(Boolean);
+          const cleanedLines = lines
+            .map((l) =>
+              l.replace(/\b(Core Academic Subjects|Academic Specialization|Years of experience)\b.*$/i, "")
+                .replace(/\s{2,}/g, " ")
+                .replace(/\s+,/g, ",")
+                .trim()
+            )
+            .filter(Boolean);
+
+          const headingLines = cleanedLines.filter((l) => l.includes("|") || degreeKeywords.test(l));
+          return (headingLines.length ? headingLines : cleanedLines).join("\n");
+        };
+
+        const entries = rawText.split(/\n{2,}/).map((entry) => entry.trim()).filter(Boolean);
+        if (!entries.length) return content.trim();
+
+        return entries.map(processEntry).filter(Boolean).join("\n\n");
+      }
+
+      if (sectionName === "skills") {
+        const rawText = content.replace(/\r?\n/g, "\n").trim();
+        const lines = rawText.split("\n").map((l) => l.trim()).filter(Boolean);
+        const toolLineIndex = lines.findIndex((l) => /^(software\s*&\s*tools|software tools|tools):/i.test(l));
+
+        let skillText = "";
+        let toolText = "";
+
+        if (toolLineIndex >= 0) {
+          toolText = lines[toolLineIndex].replace(/^(software\s*&\s*tools|software tools|tools):\s*/i, "").trim();
+          skillText = lines.filter((_, idx) => idx !== toolLineIndex).join(" ").trim();
+        } else {
+          const combined = lines.join(" ").trim();
+          const splitMatch = combined.match(/^(.*?)(?:\s+(software\s*&\s*tools|software tools|tools):\s*)(.*)$/i);
+          if (splitMatch) {
+            skillText = splitMatch[1].trim();
+            toolText = splitMatch[3].trim();
+          } else {
+            skillText = combined;
+          }
+        }
+
+        skillText = skillText.replace(/^skills:\s*/i, "");
+        if (skillText) {
+          skillText = `Skills: ${skillText}`;
+        }
+
+        if (toolText) {
+          const toolLine = `Software & Tools: ${toolText.replace(/^(software\s*&\s*tools|software tools|tools):\s*/i, "").trim()}`;
+          return `${skillText}\n\n${toolLine}`.trim();
+        }
+
+        return skillText.trim();
+      }
+
+      return content;
+    }
+
     if (!cleaned.trim()) {
       return NextResponse.json(
         {
@@ -1595,10 +1682,12 @@ export async function POST(req: Request) {
       );
     }
 
+    const post = postProcessSection(section, String(cleaned));
     return NextResponse.json(
       {
-        content: String(cleaned),
-        text: String(cleaned),
+        content: String(post),
+        text: String(post),
+        raw: String(cleaned),
         model,
         tokens: usage || {
           prompt_tokens: inputTokensPreview,
