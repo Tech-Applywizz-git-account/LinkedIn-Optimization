@@ -137,13 +137,14 @@
 //       return `Task:
 // Create a LinkedIn HEADLINE using ONLY facts found in [Resume_Text].
 // - Use the most recent role/title from the resume (no aspirational or target role).
-// - ALWAYS include total years of experience if it is explicitly present in the resume (e.g., "4+ Years").
-// - Include up to 3 skills explicitly listed in the resume (no extras, no keyword injection).
-// - Format: Role/Title | [X]+ Years in [Skill1, Skill2, Skill3] | [Short phrase about core expertise from resume]
+// - DO NOT include explicit years of experience in the headline (e.g., "2+ years", "3+ years", "4 Years"). Omit numeric experience mentions even if present in the resume.
+// - Do NOT infer seniority prefixes solely from years (avoid adding "Junior"/"Senior" based only on numeric years).
+// - Include up to 3 concise skills explicitly listed in the resume (no extras, no keyword injection).
+// - Format: Role/Title | Skill1, Skill2, Skill3 | Short phrase about core expertise from resume
 // - Keep under 220 characters. Title Case. Return ONLY the single headline line.
-
+//
 // Example Output:
-// Full Stack Java Developer | 4+ Years in Spring Boot, React, AWS | Building Scalable Microservices & Cloud-Native Applications`;
+// Full Stack Java Developer | Spring Boot, React, AWS | Building Scalable Microservices & Cloud-Native Applications`;
 
 //     /* ---------------- ABOUT (resume-only) ---------------- */
 //     case "about":

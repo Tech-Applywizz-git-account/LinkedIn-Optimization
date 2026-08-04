@@ -476,7 +476,7 @@ export default function OptimizerWizard({
           industry: industry || "",
           generatedAt: new Date().toISOString(),
           keywords,
-          personName: parsed?.name || "",
+          personName: parsed?.name || extractNameFromText(resumeText) || "",
         },
         sections: { ...outputs },
         resumeText,
@@ -501,6 +501,39 @@ export default function OptimizerWizard({
 
   function prev() {
     if (stepIndex > 0) setStepIndex(stepIndex - 1);
+  }
+
+  // Heuristic: extract a probable person name from the resume text when parsed.name is missing
+  function extractNameFromText(text: string | null | undefined): string {
+    if (!text) return "";
+    const normalized = text.replace(/\r\n/g, "\n").replace(/\t+/g, " ").trim();
+    const lines = normalized.split(/\n/).map((l) => l.trim()).filter(Boolean);
+
+    const looksLikeName = (tokens: string[]) => {
+      if (tokens.length < 2 || tokens.length > 4) return false;
+      // tokens should be words (letters, hyphen, apostrophe) and mostly capitalized/all-caps
+      const valid = tokens.every((t) => /^[A-Za-z\-']+$/.test(t));
+      if (!valid) return false;
+      const capCount = tokens.reduce((s, t) => s + (/^[A-Z][a-z]+$/.test(t) || /^[A-Z\-']+$/.test(t) ? 1 : 0), 0);
+      return capCount >= 2;
+    };
+
+    // Check the first few lines for a name-like line
+    for (let i = 0; i < Math.min(6, lines.length); i++) {
+      const line = lines[i];
+      const cleaned = line.split(/[|,–—\t]/)[0].trim();
+      const tokens = cleaned.split(/\s+/).filter(Boolean);
+      if (looksLikeName(tokens)) return tokens.slice(0, 4).join(" ");
+      // also check for leading all-caps sequences
+      const allCapsMatch = cleaned.match(/([A-Z]{2,}(?:\s+[A-Z]{2,}){1,3})/);
+      if (allCapsMatch) return allCapsMatch[1].trim();
+    }
+
+    // Fallback: search whole text for 2-3 consecutive all-caps words
+    const globalMatch = normalized.match(/([A-Z]{2,}(?:\s+[A-Z]{2,}){1,3})/);
+    if (globalMatch) return globalMatch[1].trim();
+
+    return "";
   }
 
   const isGenerating = !!generating[step.key];

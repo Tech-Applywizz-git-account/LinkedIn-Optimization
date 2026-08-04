@@ -51,7 +51,8 @@ export function makeHeadline(
 
   const parts = [
     toTitle(role),
-    yoe ? `${yoe}+ YOE` : null,
+    // Remove years-of-experience from headline — keep role and top skills only
+    null,
     topSkills.length ? topSkills.map(toTitle).join(", ") : null,
   ].filter(Boolean);
 
@@ -137,21 +138,45 @@ export function makeSkills(
   _domainKeywords?: string[]
 ): string {
   const skills = listify(resume.skills);
-  return skills.length ? `Skills: ${skills.join(", ")}` : "";
+  if (!skills.length) return "";
+
+  // Expand items that use 'and' or other separators into individual skills,
+  // then deduplicate while preserving order. This reduces repeated 'and' usage
+  // in the skills line without removing any keywords.
+  const expanded: string[] = [];
+  for (const s of skills) {
+    // Split on commas, semicolons, or the word 'and' (case-insensitive)
+    const parts = s.split(/\s*(?:,|;|\band\b)\s*/i).map(p => p.trim()).filter(Boolean);
+    expanded.push(...parts);
+  }
+
+  const seen = new Set<string>();
+  const dedup: string[] = [];
+  for (const it of expanded) {
+    const key = it.toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      dedup.push(it);
+    }
+  }
+
+  return dedup.length ? `Skills: ${dedup.join(", ")}` : "";
 }
 
 /* ---------------- EDUCATION — resume only (NO bullets in type) ---------------- */
 
 export function makeEducation(resume: ParsedResume): string {
   const out: string[] = [];
-  for (const e of resume.education || []) {
-    // EducationItem fields from parser: school, degree, field, start, end, location, raw
+  // Do not include academic specialization (`field`) or years/dates. Limit to max 3 education headings.
+  const entries = (resume.education || []).slice(0, 3);
+  for (const e of entries) {
+    // Keep degree, school, location, and start/end dates (omit field/specialization)
+    const dateRange = [e.start, e.end].filter(Boolean).join(" – ") || null;
     const headerParts = [
       e.degree ? toTitle(e.degree) : null,
-      e.field ? toTitle(e.field) : null,
       e.school ? toTitle(e.school) : null,
       e.location || null,
-      [e.start, e.end].filter(Boolean).join(" – ") || null,
+      dateRange,
     ].filter(Boolean);
     const header = headerParts.join(" | ");
     if (header) out.push(header);

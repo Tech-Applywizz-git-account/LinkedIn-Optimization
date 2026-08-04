@@ -15,6 +15,8 @@ Instructions:
   - Less than 2 years of experience: Prefix with "Junior" or "Associate" (e.g., "Junior Software Engineer", "Associate Data Analyst").
   - 2 to 5 years of experience: Do NOT add any seniority prefix. Use the role name directly (e.g., "MERN Developer", "Data Analyst").
   - IMPORTANT: If the resume states "3+ years", "4+ years", or any value between 2 and 5, treat it strictly as the 2–5 years range. Do NOT use "Senior". Use the role name only.
+  - DO NOT include explicit years of experience (e.g., "2+ years", "3+ years", "4 Years") in the headline. Omit numeric experience mentions even if present in the resume.
+   - Do NOT infer seniority prefixes solely from years (avoid adding "Junior"/"Senior" based only on numeric years).
   - 5 to 8 years of experience: Prefix with "Senior" ONLY when experience is clearly 5 years or more (e.g., "Senior Backend Engineer").
   - 8+ years of experience: Prefix with "Senior", "Lead", or "Principal" depending on their exact roles.
 - Extract and highlight the most essential keywords of 1, 2, or 3 words each from the resume [Resume_Text] (such as job titles, core specializations, tools, and technical skills).
