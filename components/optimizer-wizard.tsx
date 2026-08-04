@@ -503,37 +503,28 @@ export default function OptimizerWizard({
     if (stepIndex > 0) setStepIndex(stepIndex - 1);
   }
 
-  // Heuristic: extract a probable person name from the resume text when parsed.name is missing
+  // Heuristic: extract a probable person name from the resume text when parsed.name is missing.
+  // Prefer uppercase candidate names and ignore lowercase lines.
   function extractNameFromText(text: string | null | undefined): string {
     if (!text) return "";
     const normalized = text.replace(/\r\n/g, "\n").replace(/\t+/g, " ").trim();
     const lines = normalized.split(/\n/).map((l) => l.trim()).filter(Boolean);
 
-    const looksLikeName = (tokens: string[]) => {
+    const looksLikeUppercaseName = (cleaned: string) => {
+      if (!cleaned || cleaned !== cleaned.toUpperCase()) return false;
+      const tokens = cleaned.split(/\s+/).filter(Boolean);
       if (tokens.length < 2 || tokens.length > 4) return false;
-      // tokens should be words (letters, hyphen, apostrophe) and mostly capitalized/all-caps
-      const valid = tokens.every((t) => /^[A-Za-z\-']+$/.test(t));
-      if (!valid) return false;
-      const capCount = tokens.reduce((s, t) => s + (/^[A-Z][a-z]+$/.test(t) || /^[A-Z\-']+$/.test(t) ? 1 : 0), 0);
-      return capCount >= 2;
+      return tokens.every((t) => /^[A-Z][A-Z'’\-]+$/.test(t));
     };
 
-    // Check the first few lines for a name-like line
-    for (let i = 0; i < Math.min(6, lines.length); i++) {
+    for (let i = 0; i < Math.min(8, lines.length); i++) {
       const line = lines[i];
       const cleaned = line.split(/[|,–—\t]/)[0].trim();
-      const tokens = cleaned.split(/\s+/).filter(Boolean);
-      if (looksLikeName(tokens)) return tokens.slice(0, 4).join(" ");
-      // also check for leading all-caps sequences
-      const allCapsMatch = cleaned.match(/([A-Z]{2,}(?:\s+[A-Z]{2,}){1,3})/);
-      if (allCapsMatch) return allCapsMatch[1].trim();
+      if (looksLikeUppercaseName(cleaned)) return cleaned;
     }
 
-    // Fallback: search whole text for 2-3 consecutive all-caps words
-    const globalMatch = normalized.match(/([A-Z]{2,}(?:\s+[A-Z]{2,}){1,3})/);
-    if (globalMatch) return globalMatch[1].trim();
-
-    return "";
+    const globalMatch = normalized.match(/([A-Z][A-Z'’\-]+(?:\s+[A-Z][A-Z'’\-]+){1,3})/);
+    return globalMatch?.[1]?.trim() ?? "";
   }
 
   const isGenerating = !!generating[step.key];

@@ -163,9 +163,12 @@ function extractNameFromPreamble(preamble: string): string {
     if (/https?:\/\/|www\./i.test(line)) continue;       // URLs
     if (/^[+]?[\d\s()\-.]{7,}$/.test(line)) continue;   // phone numbers
     if (/linkedin\.com|github\.com/i.test(line)) continue; // social profiles
-    // Must contain at least 2 words (first + last name) and only letters/spaces/hyphens
-    if (/^[A-Za-z][A-Za-z\s\-'.]{2,50}$/.test(line) && line.trim().split(/\s+/).length >= 2) {
-      return line.trim();
+
+    const cleaned = line.split(/[|,–—\t]/)[0].trim();
+    if (!cleaned || cleaned !== cleaned.toUpperCase()) continue;
+    if (/\b(?:RESUME|CV|CURRICULUM|PROFILE|SUMMARY|CONTACT|OBJECTIVE)\b/.test(cleaned)) continue;
+    if (/^[A-Z][A-Z\s\-'.]{2,50}$/.test(cleaned) && cleaned.split(/\s+/).length >= 2) {
+      return cleaned;
     }
   }
   return "";

@@ -1609,23 +1609,37 @@ export async function POST(req: Request) {
       }
 
       if (sectionName === "education") {
-        // Prefer the first non-empty line as the compact heading (Degree | School | Location | Date)
         const lines = content.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
         if (!lines.length) return content.trim();
-        // Choose the first line that looks like a heading (contains '|' or a degree keyword)
         const degreeKeywords = /(degree|bachelor|master|ba\b|bs\b|msc\b|ms\b|phd\b|diploma)/i;
-        let heading = lines.find(l => l.includes("|") || degreeKeywords.test(l)) || lines[0];
-        // Remove trailing labels like 'Core Academic Subjects', 'Academic Specialization', 'Years of experience'
-        heading = heading.replace(/\b(Core Academic Subjects|Academic Specialization|Years of experience)\b.*$/i, "").trim();
-        // Remove extra commas/space
-        heading = heading.replace(/\s{2,}/g, " ").replace(/\s+,/g, ",").trim();
-        return heading;
+        const cleanedLines = lines
+          .map((l) =>
+            l.replace(/\b(Core Academic Subjects|Academic Specialization|Years of experience)\b.*$/i, "")
+              .replace(/\s{2,}/g, " ")
+              .replace(/\s+,/g, ",")
+              .trim()
+          )
+          .filter(Boolean);
+
+        // Keep all education entries, but only return lines that look like compact headings or are the first useful line.
+        const headingLines = cleanedLines.filter((l) => l.includes("|") || degreeKeywords.test(l));
+        return headingLines.length ? headingLines.join("\n") : cleanedLines.join("\n");
       }
 
       if (sectionName === "skills") {
-        // Flatten lists and split on commas/semicolons/and, then dedupe while preserving order
-        const parts = content.split(/\r?\n|,|;|\band\b/gi).map(p => p.trim()).filter(Boolean);
-        const seen = new Set();
+        // Preserve a separate Software & Tools line while normalizing the skills list.
+        const lines = content.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+        const toolLineIndex = lines.findIndex((l) => /software\s*&\s*tools|software tools|tools:/i.test(l));
+        const toolLine = toolLineIndex >= 0 ? lines[toolLineIndex] : "";
+        const skillLines = lines.filter((_, idx) => idx !== toolLineIndex);
+
+        const parts = skillLines
+          .join(" ")
+          .split(/,|;|\band\b/gi)
+          .map((p) => p.trim())
+          .filter(Boolean);
+
+        const seen = new Set<string>();
         const out: string[] = [];
         for (const p of parts) {
           const key = p.toLowerCase();
@@ -1634,7 +1648,12 @@ export async function POST(req: Request) {
             out.push(p);
           }
         }
-        return out.join(", ");
+
+        const skillText = out.join(", ");
+        if (toolLine) {
+          return `${skillText}\n\n${toolLine}`.trim();
+        }
+        return skillText;
       }
 
       return content;

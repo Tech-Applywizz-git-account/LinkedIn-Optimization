@@ -419,7 +419,7 @@ export default function FinalPage() {
     <w:sectPr>
       <w:headerReference w:type="default" r:id="rId3"/>
       <w:pgSz w:w="12240" w:h="15840"/>
-      <w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="900" w:footer="720" w:gutter="0"/>
+      <w:pgMar w:top="1134" w:right="720" w:bottom="1134" w:left="720" w:header="900" w:footer="720" w:gutter="0"/>
     </w:sectPr>
   </w:body>
 </w:document>`;
