@@ -1609,51 +1609,63 @@ export async function POST(req: Request) {
       }
 
       if (sectionName === "education") {
-        const lines = content.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-        if (!lines.length) return content.trim();
+        const rawText = content.replace(/\r?\n/g, "\n").trim();
         const degreeKeywords = /(degree|bachelor|master|ba\b|bs\b|msc\b|ms\b|phd\b|diploma)/i;
-        const cleanedLines = lines
-          .map((l) =>
-            l.replace(/\b(Core Academic Subjects|Academic Specialization|Years of experience)\b.*$/i, "")
-              .replace(/\s{2,}/g, " ")
-              .replace(/\s+,/g, ",")
-              .trim()
-          )
-          .filter(Boolean);
 
-        // Keep all education entries, but only return lines that look like compact headings or are the first useful line.
-        const headingLines = cleanedLines.filter((l) => l.includes("|") || degreeKeywords.test(l));
-        return headingLines.length ? headingLines.join("\n") : cleanedLines.join("\n");
+        const processEntry = (entry: string) => {
+          const lines = entry.split("\n").map((l) => l.trim()).filter(Boolean);
+          const cleanedLines = lines
+            .map((l) =>
+              l.replace(/\b(Core Academic Subjects|Academic Specialization|Years of experience)\b.*$/i, "")
+                .replace(/\s{2,}/g, " ")
+                .replace(/\s+,/g, ",")
+                .trim()
+            )
+            .filter(Boolean);
+
+          const headingLines = cleanedLines.filter((l) => l.includes("|") || degreeKeywords.test(l));
+          return (headingLines.length ? headingLines : cleanedLines).join("\n");
+        };
+
+        const entries = rawText.split(/\n{2,}/).map((entry) => entry.trim()).filter(Boolean);
+        if (!entries.length) return content.trim();
+
+        return entries.map(processEntry).filter(Boolean).join("\n\n");
       }
 
       if (sectionName === "skills") {
-        // Preserve a separate Software & Tools line while normalizing the skills list.
-        const lines = content.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-        const toolLineIndex = lines.findIndex((l) => /software\s*&\s*tools|software tools|tools:/i.test(l));
-        const toolLine = toolLineIndex >= 0 ? lines[toolLineIndex] : "";
-        const skillLines = lines.filter((_, idx) => idx !== toolLineIndex);
+        const rawText = content.replace(/\r?\n/g, "\n").trim();
+        const lines = rawText.split("\n").map((l) => l.trim()).filter(Boolean);
+        const toolLineIndex = lines.findIndex((l) => /^(software\s*&\s*tools|software tools|tools):/i.test(l));
 
-        const parts = skillLines
-          .join(" ")
-          .split(/,|;|\band\b/gi)
-          .map((p) => p.trim())
-          .filter(Boolean);
+        let skillText = "";
+        let toolText = "";
 
-        const seen = new Set<string>();
-        const out: string[] = [];
-        for (const p of parts) {
-          const key = p.toLowerCase();
-          if (!seen.has(key)) {
-            seen.add(key);
-            out.push(p);
+        if (toolLineIndex >= 0) {
+          toolText = lines[toolLineIndex].replace(/^(software\s*&\s*tools|software tools|tools):\s*/i, "").trim();
+          skillText = lines.filter((_, idx) => idx !== toolLineIndex).join(" ").trim();
+        } else {
+          const combined = lines.join(" ").trim();
+          const splitMatch = combined.match(/^(.*?)(?:\s+(software\s*&\s*tools|software tools|tools):\s*)(.*)$/i);
+          if (splitMatch) {
+            skillText = splitMatch[1].trim();
+            toolText = splitMatch[3].trim();
+          } else {
+            skillText = combined;
           }
         }
 
-        const skillText = out.join(", ");
-        if (toolLine) {
+        skillText = skillText.replace(/^skills:\s*/i, "");
+        if (skillText) {
+          skillText = `Skills: ${skillText}`;
+        }
+
+        if (toolText) {
+          const toolLine = `Software & Tools: ${toolText.replace(/^(software\s*&\s*tools|software tools|tools):\s*/i, "").trim()}`;
           return `${skillText}\n\n${toolLine}`.trim();
         }
-        return skillText;
+
+        return skillText.trim();
       }
 
       return content;

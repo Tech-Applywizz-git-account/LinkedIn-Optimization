@@ -317,6 +317,9 @@ export default function FinalPage() {
       const lines = content.split("\n");
       const contentParas = lines.map((line) => {
         const trimmed = line.trim();
+        if (!trimmed) {
+          return `<w:p><w:pPr><w:spacing w:after="160"/></w:pPr></w:p>`;
+        }
         // Detect bullet lines
         const isBullet = /^[•\-–—]/.test(trimmed);
         const cleaned = trimmed.replace(/^[•\-–—]\s*/, "");
