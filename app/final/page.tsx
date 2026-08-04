@@ -382,7 +382,7 @@ export default function FinalPage() {
 
     // Person name paragraph (14pt bold = 28 half), right aligned
     const namePara = personName
-      ? para(buildRuns(personName, true, 28), `<w:jc w:val="right"/><w:spacing w:before="80" w:after="160"/>`)
+      ? para(buildRuns((personName || "").toUpperCase(), true, 28), `<w:jc w:val="left"/><w:spacing w:before="80" w:after="160"/>`)
       : "";
 
     // Sections
@@ -478,7 +478,14 @@ export default function FinalPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "applywizz_final_optimization.docx";
+    // Sanitize personName for filename (fallback to 'client' if missing)
+    const rawName = (personName || "client").toString();
+    const safeName = rawName
+      .normalize("NFKD")
+      .replace(/[^a-zA-Z0-9\s-_]/g, "")
+      .trim()
+      .replace(/\s+/g, "_");
+    a.download = `${safeName}_LINKEDIN_OPTIMIZATION.docx`;
     a.click();
     URL.revokeObjectURL(url);
   }

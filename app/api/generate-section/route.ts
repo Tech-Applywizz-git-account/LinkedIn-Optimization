@@ -1585,6 +1585,61 @@ export async function POST(req: Request) {
     const { text, usage } = await callOpenAIPlain(model, userPrompt, maxTokens);
     const cleaned = sanitizeLLMText(text || "");
 
+    // Post-process specific sections to enforce client requirements (avoid numeric years in headline,
+    // keep only compact heading for education, normalize skills lists).
+    function postProcessSection(sectionName: string, content: string): string {
+      if (!content) return content;
+      // Helper to remove explicit year mentions like '2+ years', '5 years', '2018-2022'
+      const removeYearPatterns = (s: string) =>
+        s
+          .replace(/\b\d{4}\b/g, "") // bare years like 2022
+          .replace(/\b\d+\+?\s*(years|yrs|year)\b/gi, "")
+          .replace(/\b\d+\s*-\s*\d+\b/g, "")
+          .replace(/\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\.?\s+\d{4}\b/gi, (m) => m)
+          .replace(/\s{2,}/g, " ")
+          .trim();
+
+      if (sectionName === "headline") {
+        // Remove year mentions but keep other text. Also remove parenthetical years.
+        let out = content.replace(/\([^)]*\d{4}[^)]*\)/g, "");
+        out = removeYearPatterns(out);
+        // Collapse repeated separators and trim
+        out = out.replace(/\s*\|\s*/g, " | ").replace(/\s{2,}/g, " ").trim();
+        return out;
+      }
+
+      if (sectionName === "education") {
+        // Prefer the first non-empty line as the compact heading (Degree | School | Location | Date)
+        const lines = content.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        if (!lines.length) return content.trim();
+        // Choose the first line that looks like a heading (contains '|' or a degree keyword)
+        const degreeKeywords = /(degree|bachelor|master|ba\b|bs\b|msc\b|ms\b|phd\b|diploma)/i;
+        let heading = lines.find(l => l.includes("|") || degreeKeywords.test(l)) || lines[0];
+        // Remove trailing labels like 'Core Academic Subjects', 'Academic Specialization', 'Years of experience'
+        heading = heading.replace(/\b(Core Academic Subjects|Academic Specialization|Years of experience)\b.*$/i, "").trim();
+        // Remove extra commas/space
+        heading = heading.replace(/\s{2,}/g, " ").replace(/\s+,/g, ",").trim();
+        return heading;
+      }
+
+      if (sectionName === "skills") {
+        // Flatten lists and split on commas/semicolons/and, then dedupe while preserving order
+        const parts = content.split(/\r?\n|,|;|\band\b/gi).map(p => p.trim()).filter(Boolean);
+        const seen = new Set();
+        const out: string[] = [];
+        for (const p of parts) {
+          const key = p.toLowerCase();
+          if (!seen.has(key)) {
+            seen.add(key);
+            out.push(p);
+          }
+        }
+        return out.join(", ");
+      }
+
+      return content;
+    }
+
     if (!cleaned.trim()) {
       return NextResponse.json(
         {
@@ -1596,10 +1651,12 @@ export async function POST(req: Request) {
       );
     }
 
+    const post = postProcessSection(section, String(cleaned));
     return NextResponse.json(
       {
-        content: String(cleaned),
-        text: String(cleaned),
+        content: String(post),
+        text: String(post),
+        raw: String(cleaned),
         model,
         tokens: usage || {
           prompt_tokens: inputTokensPreview,
