@@ -538,6 +538,7 @@ import {
 } from "@/lib/modelPicker";
 import type { LLMModel } from "@/lib/modelPicker";
 import { sanitizeLLMText } from "@/lib/sanitize";
+import { recordLinkedInTokenUsage } from "@/lib/linkedin-token-usage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -1327,10 +1328,32 @@ function safeTextModel(m: string | undefined): string {
   return bad ? fallback : m;
 }
 
+function taskTypeForSection(section: string): string {
+  const map: Record<string, string> = {
+    headline: "linkedin_headline_generation", about: "linkedin_about_generation",
+    experience: "linkedin_experience_optimization", internship: "linkedin_internship_optimization",
+    experience_buttons: "linkedin_experience_company_selection", internship_buttons: "linkedin_internship_company_selection",
+    projects: "linkedin_projects_optimization", education: "linkedin_education_optimization",
+    skills: "linkedin_skills_optimization", certifications: "linkedin_certifications_optimization",
+    banner: "linkedin_banner_content_generation",
+  };
+  return map[section] || `linkedin_${section.replace(/[^a-z0-9]+/gi, "_").toLowerCase()}_generation`;
+}
+
+async function trackResponse(taskType: string, model: string, response: any, startedAt: number) {
+  const usage = response?.usage;
+  const inputTokens = Number(usage?.input_tokens ?? usage?.prompt_tokens ?? 0);
+  const outputTokens = Number(usage?.output_tokens ?? usage?.completion_tokens ?? 0);
+  const completionTokens = Number(usage?.total_tokens ?? inputTokens + outputTokens);
+  await recordLinkedInTokenUsage({ taskType, model, deploymentName: process.env.AZURE_OPENAI_DEPLOYMENT, azureRequestId: response?._request_id ?? null, inputTokens, outputTokens, completionTokens, responseTimeMs: Date.now() - startedAt });
+}
+
 async function fallbackChatPlain(
   model: string,
-  userPrompt: string
+  userPrompt: string,
+  taskType: string,
 ): Promise<{ text: string; usage?: { prompt_tokens: number; completion_tokens: number } }> {
+  const startedAt = Date.now();
   const resp = await openai.chat.completions.create({
     model,
     messages: [
@@ -1338,6 +1361,7 @@ async function fallbackChatPlain(
       { role: "user", content: userPrompt },
     ],
   });
+  await trackResponse(taskType, model, resp, startedAt);
   const text =
     resp?.choices?.[0]?.message?.content?.trim?.() ??
     resp?.choices?.[0]?.message?.content ??
@@ -1354,10 +1378,12 @@ async function fallbackChatPlain(
 async function callOpenAIPlain(
   model: LLMModel,
   userPrompt: string,
-  maxTokens: number
+  maxTokens: number,
+  taskType: string,
 ): Promise<{ text: string; usage?: { prompt_tokens: number; completion_tokens: number } }> {
   const chosen = safeTextModel(String(model));
   try {
+    const startedAt = Date.now();
     const res = await openai.responses.create({
       model: chosen,
       instructions: SYSTEM_PROMPT,
@@ -1365,6 +1391,7 @@ async function callOpenAIPlain(
       max_output_tokens: maxTokens,
     });
     const text = extractOutputText(res);
+    await trackResponse(taskType, chosen, res, startedAt);
     const usage = res?.usage
       ? {
         prompt_tokens:
@@ -1379,12 +1406,12 @@ async function callOpenAIPlain(
       : undefined;
 
     if (!text?.trim()) {
-      const fb = await fallbackChatPlain(chosen, userPrompt);
+      const fb = await fallbackChatPlain(chosen, userPrompt, taskType);
       return { text: fb.text, usage: fb.usage };
     }
     return { text, usage };
   } catch {
-    const fb = await fallbackChatPlain(chosen, userPrompt);
+    const fb = await fallbackChatPlain(chosen, userPrompt, taskType);
     return { text: fb.text, usage: fb.usage };
   }
 }
@@ -1392,10 +1419,12 @@ async function callOpenAIPlain(
 async function callOpenAIJSON(
   model: LLMModel,
   userPrompt: string,
-  maxTokens: number
+  maxTokens: number,
+  taskType: string,
 ): Promise<{ jsonText: string; usage?: { prompt_tokens: number; completion_tokens: number } }> {
   const chosen = safeTextModel(String(model));
   try {
+    const startedAt = Date.now();
     const res = await openai.responses.create({
       model: chosen,
       instructions: SYSTEM_PROMPT,
@@ -1403,6 +1432,7 @@ async function callOpenAIJSON(
       max_output_tokens: maxTokens,
     });
     const jsonText = extractOutputText(res);
+    await trackResponse(taskType, chosen, res, startedAt);
     const usage = res?.usage
       ? {
         prompt_tokens:
@@ -1417,6 +1447,7 @@ async function callOpenAIJSON(
       : undefined;
 
     if (!jsonText?.trim()) {
+      const fbStartedAt = Date.now();
       const fb = await openai.chat.completions.create({
         model: chosen,
         messages: [
@@ -1424,6 +1455,7 @@ async function callOpenAIJSON(
           { role: "user", content: userPrompt + "\n\nReturn ONLY valid JSON." },
         ],
       });
+      await trackResponse(taskType, chosen, fb, fbStartedAt);
       const t =
         fb?.choices?.[0]?.message?.content?.trim?.() ??
         fb?.choices?.[0]?.message?.content ??
@@ -1440,6 +1472,7 @@ async function callOpenAIJSON(
     }
     return { jsonText, usage };
   } catch {
+      const fbStartedAt = Date.now();
     const fb = await openai.chat.completions.create({
       model: chosen,
       messages: [
@@ -1447,6 +1480,7 @@ async function callOpenAIJSON(
         { role: "user", content: userPrompt + "\n\nReturn ONLY valid JSON." },
       ],
     });
+    await trackResponse(taskType, chosen, fb, fbStartedAt);
     const t =
       fb?.choices?.[0]?.message?.content?.trim?.() ??
       fb?.choices?.[0]?.message?.content ??
@@ -1524,6 +1558,7 @@ export async function POST(req: Request) {
 
     const isButtons =
       section === "experience_buttons" || section === "internship_buttons";
+    const taskType = taskTypeForSection(section);
 
     // Choose model
     let model: LLMModel =
@@ -1557,7 +1592,8 @@ export async function POST(req: Request) {
       const { jsonText, usage } = await callOpenAIJSON(
         model,
         userPrompt,
-        maxTokens
+        maxTokens,
+        taskType
       );
       const parsed = safeExtractJSON(jsonText);
       const rawItems =
@@ -1582,7 +1618,7 @@ export async function POST(req: Request) {
     }
 
     // Plain text sections
-    const { text, usage } = await callOpenAIPlain(model, userPrompt, maxTokens);
+    const { text, usage } = await callOpenAIPlain(model, userPrompt, maxTokens, taskType);
     const cleaned = sanitizeLLMText(text || "");
 
     // Post-process specific sections to enforce client requirements (avoid numeric years in headline,
