@@ -1335,6 +1335,17 @@ function taskTypeForSection(section: string): string {
     experience_buttons: "linkedin_experience_company_selection", internship_buttons: "linkedin_internship_company_selection",
     projects: "linkedin_projects_optimization", education: "linkedin_education_optimization",
     skills: "linkedin_skills_optimization", certifications: "linkedin_certifications_optimization",
+    headline: "linkedin_headline_generation",
+    about: "linkedin_about_generation",
+    experience: "linkedin_experience_optimization",
+    internship: "linkedin_internship_optimization",
+    experience_buttons: "linkedin_experience_company_selection",
+    internship_buttons: "linkedin_internship_company_selection",
+    projects: "linkedin_projects_optimization",
+    education: "linkedin_education_optimization",
+    education_item: "linkedin_education_item_generation",
+    skills: "linkedin_skills_optimization",
+    certifications: "linkedin_certifications_optimization",
     banner: "linkedin_banner_content_generation",
   };
   return map[section] || `linkedin_${section.replace(/[^a-z0-9]+/gi, "_").toLowerCase()}_generation`;
