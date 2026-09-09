@@ -2,7 +2,6 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth";
 
-type UsageContext = { userId: string; email: string };
 export type AzureTokenUsageRow = {
   id: string;
   user_id: string | null;
@@ -32,9 +31,6 @@ type UsageContext = {
 };
 
 export type AzureTokenUsageInput = {
-  taskType: string; model: string; deploymentName?: string;
-  azureRequestId?: string | null; inputTokens: number; outputTokens: number;
-  completionTokens: number; responseTimeMs?: number;
   taskType: string;
   model: string;
   deploymentName?: string;
@@ -46,13 +42,11 @@ export type AzureTokenUsageInput = {
 };
 
 let adminClient: SupabaseClient | null = null;
-function getAdminClient() {
 
 function getAdminClient(): SupabaseClient | null {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return null;
-  if (!adminClient) adminClient = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
   if (!adminClient) {
     adminClient = createClient(url, key, {
       auth: { autoRefreshToken: false, persistSession: false },
@@ -63,7 +57,6 @@ function getAdminClient(): SupabaseClient | null {
 
 async function getUsageContext(): Promise<UsageContext | null> {
   const client = getAdminClient();
-  if (!client) { console.error("LinkedIn token usage skipped: Supabase server credentials are missing"); return null; }
   if (!client) {
     console.error("LinkedIn token usage skipped: Supabase server credentials are missing");
     return null;
@@ -73,9 +66,6 @@ async function getUsageContext(): Promise<UsageContext | null> {
   const payload = await verifyToken(sessionToken);
   const email = payload?.email?.trim().toLowerCase();
   if (!email) return null;
-  // This application has no Supabase auth.users record. The custom email is
-  // the stable authenticated user identifier used by the aggregation key.
-  return { userId: email, email };
 
   // LinkedIn users authenticate with Email + OTP (no Supabase Auth UUID).
   // Therefore, user_id is strictly NULL, and normalized email is the identity.
@@ -88,9 +78,6 @@ export async function recordLinkedInTokenUsage(input: AzureTokenUsageInput) {
     if (!context) return;
     const client = getAdminClient();
     if (!client) return;
-    const { error } = await client.rpc("record_linkedin_token_usage", {
-      p_user_id: context.userId, p_email: context.email, p_task_type: input.taskType,
-      p_model: input.model, p_deployment_name: input.deploymentName || null,
 
     // All NEW LinkedIn token usage records are stored in public.azure_token_usage
     // with user_id = NULL, product = 'linkedin_optimization', and normalized email.
@@ -109,7 +96,6 @@ export async function recordLinkedInTokenUsage(input: AzureTokenUsageInput) {
     });
 
     if (error) throw error;
-  } catch (error) { console.error("Azure token usage recording failed:", error); }
   } catch (error) {
     console.error("Azure token usage recording failed:", error);
   }
